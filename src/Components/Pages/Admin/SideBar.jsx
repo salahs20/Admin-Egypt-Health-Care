@@ -25,7 +25,7 @@ const SideBar = () => {
       <div
         className={`fixed h-full bg-gray-800 text-white transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 w-64`}
+        } md:translate-x-0 w-48`}
       >
         <div className="p-4 text-xl font-bold border-b border-gray-700 pt-10 md:pt-3">
           Admin Panel
@@ -35,12 +35,11 @@ const SideBar = () => {
             className="p-2 hover:bg-gray-700 cursor-pointer"
             onClick={handleItemClick}
           >
-            <Link to="*/">
-
-            <div className="flex  items-center gap-1">
-            <MdOutlineMedicalServices/>
-              <span> ادارة الخدمات</span>
-            </div>
+            <Link to="/">
+              <div className="flex items-center gap-1">
+                <MdOutlineMedicalServices />
+                <span> ادارة الخدمات</span>
+              </div>
             </Link>
           </li>
           <li
@@ -48,29 +47,22 @@ const SideBar = () => {
             onClick={handleItemClick}
           >
             <Link to="appointment">
-            <div className="flex  items-center gap-1">
-            <CgCalendarDates/>
-              <span> ادارة المواعيد</span>
-            </div></Link>
+              <div className="flex items-center gap-1">
+                <CgCalendarDates />
+                <span> ادارة المواعيد</span>
+              </div>
+            </Link>
           </li>
           <li
             className="p-2 hover:bg-gray-700 cursor-pointer"
             onClick={handleItemClick}
           >
-            <Link to="user   ">
-            <div className="flex  items-center gap-1">
-            <LuUsersRound/>
-              <span>اداره المستخدمين</span>
-            </div></Link>
-          </li>
-          <li
-            className="p-2 hover:bg-gray-700 cursor-pointer"
-            onClick={handleItemClick}
-          >
-            <div className="flex  items-center gap-1">
-            <BiLogOut />
-              <span> Logout</span>
-            </div>
+            <Link to="user">
+              <div className="flex items-center gap-1">
+                <LuUsersRound />
+                <span>اداره المستخدمين</span>
+              </div>
+            </Link>
           </li>
         </ul>
       </div>

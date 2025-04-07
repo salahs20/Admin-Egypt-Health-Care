@@ -81,7 +81,7 @@ const AdminServices = () => {
   };
 
   return (
-    <div className="pb-8 px-4 md:ps-[16rem]">
+    <div className="pb-8 px-4 md:ps-[11rem]">
       {error && <p className="text-red-500">{error}</p>}
       {[
         {

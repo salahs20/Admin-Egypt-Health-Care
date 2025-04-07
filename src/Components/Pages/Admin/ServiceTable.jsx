@@ -184,7 +184,7 @@ const ServiceTable = () => {
 
   return (
     <>
-      <div className="pb-8 px-4 md:ps-[16rem]">
+      <div className="pb-8 px-4 md:ps-[11rem]">
         <div className="bg-white p-6 rounded-lg shadow-lg mt-8">
           <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
             إدارة المحافظات والعيادات والمراكز

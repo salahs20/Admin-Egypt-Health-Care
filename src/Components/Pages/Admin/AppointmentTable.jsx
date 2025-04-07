@@ -281,7 +281,7 @@ const AppointmentTable = () => {
   );
 
   return (
-    <div className="pb-8 px-4 md:ps-[16rem]">
+    <div className="pb-8 px-4 md:ps-[11rem]">
       <div className="mx-auto bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
           إدارة التخصصات والمواعيد

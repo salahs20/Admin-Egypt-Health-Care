@@ -143,7 +143,7 @@ const UserTable = () => {
 
   return (
     <div className="pb-8 sm:px-6 lg:px-8">
-      <div className="md:ps-[16rem] mx-auto bg-white p-6 rounded-lg shadow-lg">
+      <div className="md:ps-[11rem] mx-auto bg-white p-6 rounded-lg shadow-lg">
         <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
           إدارة المستخدمين
         </h2>
@@ -325,6 +325,14 @@ const UserTable = () => {
                 placeholder="رقم الهاتف"
                 name="phone"
                 value={editingAppointment.phone}
+                onChange={handleChange}
+              />
+              <input
+                type="text"
+                className="border border-gray-300 py-2 px-4 rounded w-full"
+                placeholder="الايميل"
+                name="email"
+                value={editingAppointment.email}
                 onChange={handleChange}
               />
               <input
