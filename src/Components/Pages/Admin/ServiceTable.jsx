@@ -50,10 +50,7 @@ const ServiceTable = () => {
       const provinceRef = await addDoc(collection(db, "Provinces"), {
         name: newProvince,
       });
-      setProvinces([
-        ...provinces,
-        { id: provinceRef.id, name: newProvince },
-      ]);
+      setProvinces([...provinces, { id: provinceRef.id, name: newProvince }]);
       setNewProvince("");
     } catch (error) {
       console.error("Error adding province: ", error);
@@ -80,12 +77,16 @@ const ServiceTable = () => {
         const centersSnapshot = await getDocs(centersQuery);
         for (const centerDoc of centersSnapshot.docs) {
           await deleteDoc(doc(db, "Centers", centerDoc.id));
-          setCenters((prev) => prev.filter((center) => center.id !== centerDoc.id));
+          setCenters((prev) =>
+            prev.filter((center) => center.id !== centerDoc.id)
+          );
         }
       }
 
       await deleteDoc(doc(db, "Provinces", provinceId));
-      setProvinces((prev) => prev.filter((province) => province.id !== provinceId));
+      setProvinces((prev) =>
+        prev.filter((province) => province.id !== provinceId)
+      );
     } catch (error) {
       console.error("Error deleting province: ", error);
     }
@@ -146,22 +147,36 @@ const ServiceTable = () => {
     if (!editData.clinic || !editData.center) return;
     try {
       const clinicDoc = doc(db, "Clinics", editData.clinicId);
-      await updateDoc(clinicDoc, { name: editData.clinic });
+      await updateDoc(clinicDoc, {
+        name: editData.clinic,
+        address: editData.clinicAddress || "",
+      });
 
       const centerDoc = doc(db, "Centers", editData.centerId);
-      await updateDoc(centerDoc, { name: editData.center });
+      await updateDoc(centerDoc, {
+        name: editData.center,
+        address: editData.centerAddress || "",
+      });
 
       setClinics(
         clinics.map((clinic) =>
           clinic.id === editData.clinicId
-            ? { ...clinic, name: editData.clinic }
+            ? {
+                ...clinic,
+                name: editData.clinic,
+                address: editData.clinicAddress,
+              }
             : clinic
         )
       );
       setCenters(
         centers.map((center) =>
           center.id === editData.centerId
-            ? { ...center, name: editData.center }
+            ? {
+                ...center,
+                name: editData.center,
+                address: editData.centerAddress,
+              }
             : center
         )
       );
@@ -254,10 +269,28 @@ const ServiceTable = () => {
               <input
                 type="text"
                 className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
+                placeholder="تعديل عنوان العيادة"
+                value={editData.clinicAddress || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, clinicAddress: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
                 placeholder="تعديل اسم المركز"
                 value={editData.center}
                 onChange={(e) =>
                   setEditData({ ...editData, center: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
+                placeholder="تعديل عنوان المركز"
+                value={editData.centerAddress || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, centerAddress: e.target.value })
                 }
               />
               <button
@@ -271,7 +304,10 @@ const ServiceTable = () => {
         </div>
 
         {provinces.map((province) => (
-          <div key={province.id} className="bg-white p-6 rounded-lg shadow-lg mt-8">
+          <div
+            key={province.id}
+            className="bg-white p-6 rounded-lg shadow-lg mt-8"
+          >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold text-blue-700 mb-4">
                 {province.name}
@@ -287,9 +323,11 @@ const ServiceTable = () => {
             <table className="w-full border border-gray-300 text-left mb-4">
               <thead className="bg-gray-200 text-gray-700">
                 <tr>
-                  <th className="py-3 px-4"></th>
-                  <th className="py-3 px-4">العيادة</th>
-                  <th className="py-3 px-4">المركز</th>
+                  <th className="py-3 px-4">#</th>
+                  <th className="py-3 px-4">اسم العيادة</th>
+                  <th className="py-3 px-4">عنوان العيادة</th>
+                  <th className="py-3 px-4">اسم المركز</th>
+                  <th className="py-3 px-4">عنوان المركز</th> {/* إضافة عنوان المركز */}
                   <th className="py-3 px-5">تعديل</th>
                   <th className="py-3 px-5">حذف</th>
                 </tr>
@@ -297,45 +335,55 @@ const ServiceTable = () => {
               <tbody>
                 {clinics
                   .filter((clinic) => clinic.provinceId === province.id)
-                  .map((clinic, index) => (
-                    <tr key={clinic.id} className="border-b hover:bg-gray-100">
-                      <td className="py-3 px-4">{index + 1}</td>
-                      <td className="py-3 px-4">{clinic.name}</td>
-                      <td className="py-3 px-4">
-                        {centers
-                          .filter((center) => center.clinicId === clinic.id)
-                          .map((center) => center.name)
-                          .join(", ") || "غير معروف"}
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() =>
-                            setEditData({
-                              clinicId: clinic.id,
-                              clinic: clinic.name,
-                              centerId: centers.find(
-                                (center) => center.clinicId === clinic.id
-                              )?.id,
-                              center: centers.find(
-                                (center) => center.clinicId === clinic.id
-                              )?.name,
-                            })
-                          }
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
-                        >
-                          تعديل
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleDeleteClinic(clinic.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
-                        >
-                          حذف
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  .map((clinic, index) => {
+                    const center = centers.find(
+                      (center) => center.clinicId === clinic.id
+                    );
+                    return (
+                      <tr
+                        key={clinic.id}
+                        className="border-b hover:bg-gray-100"
+                      >
+                        <td className="py-3 px-4">{index + 1}</td>
+                        <td className="py-3 px-4">{clinic.name}</td>
+                        <td className="py-3 px-4">
+                          {clinic.address || "بدون عنوان"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {center?.name || "غير معروف"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {center?.address || "بدون عنوان"}
+                        </td>{" "}
+                        {/* عرض عنوان المركز */}
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() =>
+                              setEditData({
+                                clinicId: clinic.id,
+                                clinic: clinic.name,
+                                clinicAddress: clinic.address || "",
+                                centerId: center?.id,
+                                center: center?.name || "",
+                                centerAddress: center?.address || "",
+                              })
+                            }
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
+                          >
+                            تعديل
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleDeleteClinic(clinic.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+                          >
+                            حذف
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db } from "../../../../firebase/firebase";
 import {
   collection,
@@ -17,6 +17,7 @@ const UserTable = () => {
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState(""); // New state for appointment search term
   const [errorMessage, setErrorMessage] = useState("");
   const [editingAppointment, setEditingAppointment] = useState(null);
+  const editRef = useRef(null); // مرجع لتحديد العنصر الذي يتم تعديله
 
   const handleError = (error, message) => {
     console.error(message, error);
@@ -28,13 +29,21 @@ const UserTable = () => {
       try {
         const querySnapshot = await getDocs(collection(db, "users"));
         setUsers(
-          querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+          querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            highlightColor: "bg-white", // اللون الافتراضي
+          }))
         );
       } catch (error) {
         handleError(error, "حدث خطأ أثناء تحميل بيانات المستخدمين.");
       }
     };
 
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "Appointments"));
@@ -46,7 +55,6 @@ const UserTable = () => {
       }
     };
 
-    fetchUsers();
     fetchAppointments();
   }, []);
 
@@ -65,6 +73,11 @@ const UserTable = () => {
 
   const handleEditAppointment = (appointment) => {
     setEditingAppointment(appointment);
+    setTimeout(() => {
+      if (editRef.current) {
+        editRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100); // التمرير إلى العنصر
   };
 
   const handleSaveAppointment = async () => {
@@ -80,6 +93,11 @@ const UserTable = () => {
           )
         );
         setEditingAppointment(null);
+        setTimeout(() => {
+          if (editRef.current) {
+            editRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 100); // العودة إلى العنصر بعد الحفظ
       } catch (error) {
         handleError(error, "حدث خطأ أثناء تعديل الموعد.");
       }
@@ -131,6 +149,55 @@ const UserTable = () => {
     } catch (error) {
       handleError(error, "تعذر تعديل صلاحيات المستخدم.");
     }
+  };
+
+  const handleSendWhatsApp = (appointment) => {
+    const phoneNumber = appointment.phone.startsWith("+")
+      ? appointment.phone
+      : `+20${appointment.phone}`;
+    const message =
+      `مرحبًا ${appointment.name}،\n\n` +
+      `تفاصيل الموعد الخاص بك:\n` +
+      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
+      `- المحافظة: ${appointment.province}\n` +
+      `- التخصص: ${appointment.service}\n` +
+      `- الموعد: ${appointment.appointment}\n` +
+      `- الرسالة: ${appointment.message}\n\n` +
+      `شكرًا لتواصلك معنا!` +
+      `Egypt Health Care`;
+
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
+    window.open(whatsappURL, "_blank");
+  };
+
+  const handleSendEmail = (appointment) => {
+    const email = appointment.email;
+    const subject = "تفاصيل الموعد الخاص بك";
+    const body =
+      `مرحبًا ${appointment.name}،\n\n` +
+      `تفاصيل الموعد الخاص بك:\n` +
+      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
+      `- المحافظة: ${appointment.province}\n` +
+      `- التخصص: ${appointment.service}\n` +
+      `- الموعد: ${appointment.appointment}\n` +
+      `- الرسالة: ${appointment.message}\n\n` +
+      `شكرًا لتواصلك معنا!` +
+      `Egypt Health Care`;
+
+    const mailtoURL = `mailto:${email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoURL, "_blank");
+  };
+
+  const handleChangeColor = (userId, color) => {
+    setUsers(
+      users.map((user) =>
+        user.id === userId ? { ...user, highlightColor: color } : user
+      )
+    );
   };
 
   const filteredUsers = users.filter((user) =>
@@ -201,12 +268,16 @@ const UserTable = () => {
                 <th className="py-3 px-4">البريد الإلكتروني</th>
                 <th className="py-3 px-4">رقم الهاتف</th>
                 <th className="py-3 px-4">الأدمن</th>
+                {/* <th className="py-3 px-4">تغيير اللون</th> */}
                 <th className="py-3 px-4">حذف</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user, index) => (
-                <tr key={user.id} className="border-b hover:bg-gray-100">
+                <tr
+                  key={user.id}
+                  className={`border-b hover:bg-gray-100 ${user.highlightColor}`}
+                >
                   <td className="py-3 px-4">{index + 1}</td>
                   <td className="py-3 px-4">{user.name}</td>
                   <td className="py-3 px-4">{user.email}</td>
@@ -221,6 +292,18 @@ const UserTable = () => {
                       {user.isAdmin ? "إزالة الأدمن" : "تعيين أدمن"}
                     </button>
                   </td>
+                  {/* <td className="py-3 px-4">
+                    <select
+                      onChange={(e) => handleChangeColor(user.id, e.target.value)}
+                      className="border border-gray-300 py-1 px-2 rounded"
+                    >
+                      <option value="bg-white">أبيض</option>
+                      <option value="bg-red-100">أحمر</option>
+                      <option value="bg-green-100">أخضر</option>
+                      <option value="bg-blue-100">أزرق</option>
+                      <option value="bg-yellow-100">أصفر</option>
+                    </select>
+                  </td> */}
                   <td className="py-3 px-4">
                     <button
                       onClick={() => handleDeleteUser(user.id)}
@@ -271,11 +354,29 @@ const UserTable = () => {
             </thead>
             <tbody>
               {filteredAppointments.map((appointment, index) => (
-                <tr key={appointment.id} className="border-b hover:bg-gray-100">
+                <tr
+                  key={appointment.id}
+                  ref={editingAppointment?.id === appointment.id ? editRef : null} // تحديد العنصر
+                  className="border-b hover:bg-gray-100"
+                >
                   <td className="py-3 px-4">{index + 1}</td>
                   <td className="py-3 px-4">{appointment.name}</td>
-                  <td className="py-3 px-4">{appointment.phone}</td>
-                  <td className="py-3 px-4">{appointment.email}</td>
+                  <td className="py-3 px-4">
+                    <button
+                      onClick={() => handleSendWhatsApp(appointment)}
+                      className="text-blue-500 hover:underline"
+                    >
+                      {appointment.phone}
+                    </button>
+                  </td>
+                  <td className="py-3 px-4">
+                    <button
+                      onClick={() => handleSendEmail(appointment)}
+                      className="text-blue-500 hover:underline"
+                    >
+                      {appointment.email}
+                    </button>
+                  </td>
                   <td className="py-3 px-4">
                     {appointment.type} {appointment.clinicOrCenter}
                   </td>
@@ -306,7 +407,7 @@ const UserTable = () => {
         </div>
 
         {editingAppointment && (
-          <div className="mt-6">
+          <div className="mt-6" ref={editRef}>
             <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
               تعديل الموعد
             </h3>

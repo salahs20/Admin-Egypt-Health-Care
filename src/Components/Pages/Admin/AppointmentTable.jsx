@@ -48,9 +48,9 @@ const AppointmentTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [newAppointment, setNewAppointment] = useState({
     service: "",
-    date: "",
-    specialtyId: "",
     doctor: "",
+    date: "",
+    location: "", // إذا كنت تستخدم حقل الموقع
   });
   const [editAppointmentId, setEditAppointmentId] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -312,7 +312,7 @@ const AppointmentTable = () => {
                   type="text"
                   className="border border-gray-300 py-2 px-4 rounded w-full"
                   placeholder="اسم التخصص"
-                  value={newAppointment.service}
+                  value={newAppointment.service || ""}
                   onChange={(e) =>
                     setNewAppointment({
                       ...newAppointment,
@@ -324,7 +324,7 @@ const AppointmentTable = () => {
                   type="text"
                   className="border border-gray-300 py-2 px-4 rounded w-full"
                   placeholder="اسم الدكتور"
-                  value={newAppointment.doctor}
+                  value={newAppointment.doctor || ""}
                   onChange={(e) =>
                     setNewAppointment({
                       ...newAppointment,
@@ -335,7 +335,7 @@ const AppointmentTable = () => {
                 <input
                   type="datetime-local"
                   className="border border-gray-300 py-2 px-4 rounded w-full"
-                  value={newAppointment.date}
+                  value={newAppointment.date || ""}
                   onChange={(e) =>
                     setNewAppointment({
                       ...newAppointment,
