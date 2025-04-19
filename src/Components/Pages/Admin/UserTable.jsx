@@ -8,35 +8,71 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import { Tabs, Tab, Box } from '@mui/material';
+import ExportButton from '../../Shared/ExportButton';
+
+import AdvancedFilter from '../../Shared/AdvancedFilter';
+import Calendar from '../../Shared/Calendar';
+import Statistics from '../../Shared/Statistics';
+import { toast } from 'react-toastify';
+
+const ERROR_MESSAGES = {
+  fetchUsers: "حدث خطأ أثناء تحميل بيانات المستخدمين.",
+  fetchAppointments: "حدث خطأ أثناء تحميل بيانات المواعيد.",
+  deleteAppointment: "حدث خطأ أثناء حذف الموعد.",
+  updateAppointment: "حدث خطأ أثناء تعديل الموعد.",
+  addUser: "تعذر إضافة المستخدم.",
+  deleteUser: "تعذر حذف المستخدم.",
+  toggleAdmin: "تعذر تعديل صلاحيات المستخدم.",
+  addAppointment: "حدث خطأ أثناء إضافة الموعد.",
+};
+
+const TextInput = ({ placeholder, value, onChange }) => (
+  <input
+    type="text"
+    className="border border-gray-300 py-2 px-4 rounded w-full"
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+  />
+);
 
 const UserTable = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [newUser, setNewUser] = useState({ name: "", email: "", phone: "" });
   const [appointments, setAppointments] = useState([]);
-  const [appointmentSearchTerm, setAppointmentSearchTerm] = useState(""); // New state for appointment search term
+  const [appointmentSearchTerm, setAppointmentSearchTerm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [editingAppointment, setEditingAppointment] = useState(null);
-  const editRef = useRef(null); // مرجع لتحديد العنصر الذي يتم تعديله
+  const [activeTab, setActiveTab] = useState(0);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const editRef = useRef(null);
 
   const handleError = (error, message) => {
     console.error(message, error);
     setErrorMessage(message);
+    toast.error(message);
   };
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoadingUsers(true);
       try {
         const querySnapshot = await getDocs(collection(db, "users"));
         setUsers(
           querySnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-            highlightColor: "bg-white", // اللون الافتراضي
+            highlightColor: "bg-white",
           }))
         );
       } catch (error) {
-        handleError(error, "حدث خطأ أثناء تحميل بيانات المستخدمين.");
+        handleError(error, ERROR_MESSAGES.fetchUsers);
+      } finally {
+        setLoadingUsers(false);
       }
     };
 
@@ -45,13 +81,19 @@ const UserTable = () => {
 
   useEffect(() => {
     const fetchAppointments = async () => {
+      setLoadingAppointments(true);
       try {
         const querySnapshot = await getDocs(collection(db, "Appointments"));
-        setAppointments(
-          querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        );
+        const fetchedAppointments = querySnapshot.docs.map((doc) => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        }));
+        setAppointments(fetchedAppointments);
+        setFilteredAppointments(fetchedAppointments);
       } catch (error) {
-        handleError(error, "حدث خطأ أثناء تحميل بيانات المواعيد.");
+        handleError(error, ERROR_MESSAGES.fetchAppointments);
+      } finally {
+        setLoadingAppointments(false);
       }
     };
 
@@ -65,8 +107,12 @@ const UserTable = () => {
         setAppointments(
           appointments.filter((appointment) => appointment.id !== appointmentId)
         );
+        setFilteredAppointments(
+          filteredAppointments.filter((appointment) => appointment.id !== appointmentId)
+        );
+        toast.success("تم حذف الموعد بنجاح");
       } catch (error) {
-        handleError(error, "حدث خطأ أثناء حذف الموعد.");
+        handleError(error, ERROR_MESSAGES.deleteAppointment);
       }
     }
   };
@@ -77,7 +123,7 @@ const UserTable = () => {
       if (editRef.current) {
         editRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-    }, 100); // التمرير إلى العنصر
+    }, 100);
   };
 
   const handleSaveAppointment = async () => {
@@ -92,14 +138,17 @@ const UserTable = () => {
               : appointment
           )
         );
+        setFilteredAppointments(
+          filteredAppointments.map((appointment) =>
+            appointment.id === editingAppointment.id
+              ? editingAppointment
+              : appointment
+          )
+        );
         setEditingAppointment(null);
-        setTimeout(() => {
-          if (editRef.current) {
-            editRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 100); // العودة إلى العنصر بعد الحفظ
+        toast.success("تم تحديث الموعد بنجاح");
       } catch (error) {
-        handleError(error, "حدث خطأ أثناء تعديل الموعد.");
+        handleError(error, ERROR_MESSAGES.updateAppointment);
       }
     }
   };
@@ -110,7 +159,7 @@ const UserTable = () => {
   };
 
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.phone) {
+    if (Object.values(newUser).some((field) => !field.trim())) {
       setErrorMessage("جميع الحقول مطلوبة.");
       return;
     }
@@ -119,8 +168,9 @@ const UserTable = () => {
       setUsers([...users, { id: docRef.id, ...newUser }]);
       setNewUser({ name: "", email: "", phone: "" });
       setErrorMessage("");
+      toast.success("تم إضافة المستخدم بنجاح");
     } catch (error) {
-      handleError(error, "تعذر إضافة المستخدم.");
+      handleError(error, ERROR_MESSAGES.addUser);
     }
   };
 
@@ -129,8 +179,9 @@ const UserTable = () => {
       try {
         await deleteDoc(doc(db, "users", userId));
         setUsers(users.filter((user) => user.id !== userId));
+        toast.success("تم حذف المستخدم بنجاح");
       } catch (error) {
-        handleError(error, "تعذر حذف المستخدم.");
+        handleError(error, ERROR_MESSAGES.deleteUser);
       }
     }
   };
@@ -146,8 +197,9 @@ const UserTable = () => {
           user.id === userId ? { ...user, isAdmin: newAdminStatus } : user
         )
       );
+      toast.success(`تم ${newAdminStatus ? 'تعيين' : 'إزالة'} صلاحيات الأدمن بنجاح`);
     } catch (error) {
-      handleError(error, "تعذر تعديل صلاحيات المستخدم.");
+      handleError(error, ERROR_MESSAGES.toggleAdmin);
     }
   };
 
@@ -169,6 +221,15 @@ const UserTable = () => {
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
       message
     )}`;
+    window.open(whatsappURL, "_blank");
+  };
+
+  const handleWhatsAppClick = (appointment) => {
+    const phoneNumber = appointment.phone.startsWith("+")
+      ? appointment.phone
+      : `+20${appointment.phone}`;
+    const message = `مرحبًا ${appointment.name}،\n\nتفاصيل الموعد الخاص بك:\n...`;
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappURL, "_blank");
   };
 
@@ -200,294 +261,352 @@ const UserTable = () => {
     );
   };
 
+  const handleFilterAppointments = (filters) => {
+    const filtered = appointments.filter((appointment) => {
+      const matchesProvince = filters.province
+        ? appointment.province.toLowerCase().includes(filters.province.toLowerCase())
+        : true;
+      const matchesService = filters.service
+        ? appointment.service.toLowerCase().includes(filters.service.toLowerCase())
+        : true;
+      const matchesDate = filters.date
+        ? new Date(appointment.appointment).toDateString() === new Date(filters.date).toDateString()
+        : true;
+
+      return matchesProvince && matchesService && matchesDate;
+    });
+
+    setFilteredAppointments(filtered);
+  };
+
+  const handleAddAppointment = async (newAppointment) => {
+    try {
+      const docRef = await addDoc(collection(db, "Appointments"), newAppointment);
+      const appointmentWithId = { id: docRef.id, ...newAppointment };
+      setAppointments([...appointments, appointmentWithId]);
+      setFilteredAppointments([...filteredAppointments, appointmentWithId]);
+      toast.success("تم إضافة الموعد بنجاح");
+    } catch (error) {
+      handleError(error, ERROR_MESSAGES.addAppointment);
+    }
+  };
+
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredAppointments = appointments.filter((appointment) =>
-    appointment.name.toLowerCase().includes(appointmentSearchTerm.toLowerCase())
-  );
+  const filterFields = [
+    { name: 'province', label: 'المحافظة', type: 'text' },
+    { name: 'service', label: 'التخصص', type: 'text' },
+    { name: 'date', label: 'التاريخ', type: 'date' }
+  ];
 
   return (
     <div className="pb-8 sm:px-6 lg:px-8">
-      <div className="md:ps-[11rem] mx-auto bg-white p-6 rounded-lg shadow-lg">
-        <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
-          إدارة المستخدمين
-        </h2>
+      <div className="pe-[5rem] mx-auto bg-white p-6 shadow-lg">
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          className="mb-6"
+        >
+          <Tab label="المستخدمين" />
+          <Tab label="المواعيد" />
+          {/* <Tab label="التقويم" /> */}
+          <Tab label="الإحصائيات" />
+        </Tabs>
 
-        {errorMessage && (
-          <p className="text-red-500 mb-4 text-center">{errorMessage}</p>
-        )}
+        {activeTab === 0 && (
+          <>
+            <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
+              إدارة المستخدمين
+            </h2>
 
-        <div className="mb-3">
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full"
-            placeholder="الاسم"
-            value={newUser.name}
-            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-          />
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full"
-            placeholder="البريد الإلكتروني"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-          />
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full"
-            placeholder="رقم الهاتف"
-            value={newUser.phone}
-            onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-          />
-          <button
-            onClick={handleAddUser}
-            className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded w-full sm:w-auto"
-          >
-            إضافة مستخدم
-          </button>
-        </div>
+            {errorMessage && (
+              <p className="text-red-500 mb-4 text-center">{errorMessage}</p>
+            )}
 
-        <div className="mb-6">
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full"
-            placeholder="ابحث عن مستخدم"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 text-left">
-            <thead className="bg-gray-200 text-gray-700">
-              <tr>
-                <th className="py-3 px-4"></th>
-                <th className="py-3 px-4">الاسم</th>
-                <th className="py-3 px-4">البريد الإلكتروني</th>
-                <th className="py-3 px-4">رقم الهاتف</th>
-                <th className="py-3 px-4">الأدمن</th>
-                {/* <th className="py-3 px-4">تغيير اللون</th> */}
-                <th className="py-3 px-4">حذف</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user, index) => (
-                <tr
-                  key={user.id}
-                  className={`border-b hover:bg-gray-100 ${user.highlightColor}`}
-                >
-                  <td className="py-3 px-4">{index + 1}</td>
-                  <td className="py-3 px-4">{user.name}</td>
-                  <td className="py-3 px-4">{user.email}</td>
-                  <td className="py-3 px-4">{user.phone}</td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleToggleAdmin(user.id)}
-                      className={`py-1 px-3 rounded w-full ${
-                        user.isAdmin ? "bg-blue-500" : "bg-gray-500"
-                      } text-white`}
-                    >
-                      {user.isAdmin ? "إزالة الأدمن" : "تعيين أدمن"}
-                    </button>
-                  </td>
-                  {/* <td className="py-3 px-4">
-                    <select
-                      onChange={(e) => handleChangeColor(user.id, e.target.value)}
-                      className="border border-gray-300 py-1 px-2 rounded"
-                    >
-                      <option value="bg-white">أبيض</option>
-                      <option value="bg-red-100">أحمر</option>
-                      <option value="bg-green-100">أخضر</option>
-                      <option value="bg-blue-100">أزرق</option>
-                      <option value="bg-yellow-100">أصفر</option>
-                    </select>
-                  </td> */}
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
-                    >
-                      حذف
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center mt-8">
-          جدول الحجز
-        </h2>
-
-        {errorMessage && (
-          <p className="text-red-500 mb-4 text-center">{errorMessage}</p>
-        )}
-
-        <div className="mb-6">
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full"
-            placeholder="بحث"
-            value={appointmentSearchTerm}
-            onChange={(e) => setAppointmentSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 text-left">
-            <thead className="bg-gray-200 text-gray-700">
-              <tr>
-                <th className="py-3 px-4"></th>
-                <th className="py-3 px-4">الاسم</th>
-                <th className="py-3 px-4">رقم الهاتف</th>
-                <th className="py-3 px-4">الايميل</th>
-                <th className="py-3 px-4">المكان </th>
-                <th className="py-3 px-4">المحافظة </th>
-                <th className="py-3 px-4">التخصص</th>
-                <th className="py-3 px-4">المواعيد</th>
-                <th className="py-3 px-4">الرسالة</th>
-                <th className="py-3 px-4">تعديل</th>
-                <th className="py-3 px-4">حذف</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAppointments.map((appointment, index) => (
-                <tr
-                  key={appointment.id}
-                  ref={editingAppointment?.id === appointment.id ? editRef : null} // تحديد العنصر
-                  className="border-b hover:bg-gray-100"
-                >
-                  <td className="py-3 px-4">{index + 1}</td>
-                  <td className="py-3 px-4">{appointment.name}</td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleSendWhatsApp(appointment)}
-                      className="text-blue-500 hover:underline"
-                    >
-                      {appointment.phone}
-                    </button>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleSendEmail(appointment)}
-                      className="text-blue-500 hover:underline"
-                    >
-                      {appointment.email}
-                    </button>
-                  </td>
-                  <td className="py-3 px-4">
-                    {appointment.type} {appointment.clinicOrCenter}
-                  </td>
-                  <td className="py-3 px-4">{appointment.province}</td>
-                  <td className="py-3 px-4">{appointment.service}</td>
-                  <td className="py-3 px-4">{appointment.appointment}</td>
-                  <td className="py-3 px-4">{appointment.message}</td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleEditAppointment(appointment)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded w-full"
-                    >
-                      تعديل
-                    </button>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleDeleteAppointment(appointment.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
-                    >
-                      حذف
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {editingAppointment && (
-          <div className="mt-6" ref={editRef}>
-            <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
-              تعديل الموعد
-            </h3>
             <div className="mb-3">
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
+              <TextInput
                 placeholder="الاسم"
-                name="name"
-                value={editingAppointment.name}
-                onChange={handleChange}
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
               />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
+              <TextInput
+                placeholder="البريد الإلكتروني"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              />
+              <TextInput
                 placeholder="رقم الهاتف"
-                name="phone"
-                value={editingAppointment.phone}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="الايميل"
-                name="email"
-                value={editingAppointment.email}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="المكان"
-                name="clinicOrCenter"
-                value={editingAppointment.clinicOrCenter}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="المحافظة"
-                name="province"
-                value={editingAppointment.province}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="التخصص"
-                name="service"
-                value={editingAppointment.service}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="المواعيد"
-                name="appointment"
-                value={editingAppointment.appointment}
-                onChange={handleChange}
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full"
-                placeholder="الرسالة"
-                name="message"
-                value={editingAppointment.message}
-                onChange={handleChange}
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
               />
               <button
-                onClick={handleSaveAppointment}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full sm:w-auto"
+                onClick={handleAddUser}
+                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded w-full sm:w-auto"
+                aria-label="Add User"
               >
-                حفظ التعديلات
+                إضافة مستخدم
               </button>
             </div>
-          </div>
+
+            <div className="mb-6">
+              <TextInput
+                placeholder="ابحث عن مستخدم"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <ExportButton
+              data={filteredUsers.map(({ id, name, email, phone }) => ({
+                id,
+                name,
+                email,
+                phone,
+              }))}
+              filename="users"
+            />
+           
+
+            {loadingUsers ? <p>Loading users...</p> : (
+              <div className="overflow-x-auto">
+                <table className="w-full border border-gray-300 text-left">
+                  <thead className="bg-gray-200 text-gray-700">
+                    <tr>
+                      <th className="py-3 px-4">#</th>
+                      <th className="py-3 px-4">الاسم</th>
+                      <th className="py-3 px-4">البريد الإلكتروني</th>
+                      <th className="py-3 px-4">رقم الهاتف</th>
+                      <th className="py-3 px-4">الأدمن</th>
+                      <th className="py-3 px-4">حذف</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user, index) => (
+                      <tr
+                        key={user.id}
+                        className={`border-b hover:bg-gray-100 ${user.highlightColor}`}
+                      >
+                        <td className="py-3 px-4  text-black">{index + 1}</td>
+                        <td className="py-3 px-4  text-black">{user.name}</td>
+                        <td className="py-3 px-4  text-black">{user.email}</td>
+                        <td className="py-3 px-4  text-black">{user.phone}</td>
+                        <td className="py-3 px-4"> 
+                          <button
+                            onClick={() => handleToggleAdmin(user.id)}
+                            className={`py-1 px-3 rounded w-full ${
+                              user.isAdmin ? "bg-blue-500" : "bg-gray-500"
+                            } text-white`}
+                          >
+                            {user.isAdmin ? "إزالة الأدمن" : "تعيين أدمن"}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
+                          >
+                            حذف
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 1 && (
+          <>
+            <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
+              جدول الحجز
+            </h2>
+
+            {/* <AdvancedFilter onFilter={handleFilterAppointments} fields={filterFields} /> */}
+
+            <ExportButton data={filteredAppointments} filename="appointments" />
+      
+
+            {loadingAppointments ? <p>Loading appointments...</p> : (
+              <div className="overflow-x-auto">
+                <table className="w-full border border-gray-300 text-left">
+                  <thead className="bg-gray-200 text-gray-700">
+                    <tr>
+                      <th className="py-3 px-4">#</th>
+                      <th className="py-3 px-4">الاسم</th>
+                      <th className="py-3 px-4">رقم الهاتف</th>
+                      <th className="py-3 px-4">الايميل</th>
+                      <th className="py-3 px-4">المكان </th>
+                      <th className="py-3 px-4">المحافظة </th>
+                      <th className="py-3 px-4">التخصص</th>
+                      <th className="py-3 px-4">المواعيد</th>
+                      <th className="py-3 px-4">الرسالة</th>
+                      <th className="py-3 px-4">تعديل</th>
+                      <th className="py-3 px-4">حذف</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((appointment, index) => (
+                      <tr
+                        key={appointment.id}
+                        ref={editingAppointment?.id === appointment.id ? editRef : null}
+                        className="border-b hover:bg-gray-100"
+                      >
+                        <td className="py-3 px-4  text-black">{index + 1}</td>
+                        <td className="py-3 px-4  text-black">{appointment.name}</td>
+                        <td className="py-3 px-4 ">
+                          <button
+                            onClick={() => handleWhatsAppClick(appointment)}
+                            className="text-blue-500 hover:underline"
+                          >
+                            {appointment.phone}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleSendEmail(appointment)}
+                            className="text-blue-500 hover:underline"
+                          >
+                            {appointment.email}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          {appointment.type} {appointment.clinicOrCenter}
+                        </td>
+                        <td className="py-3 px-4  text-black">{appointment.province}</td>
+                        <td className="py-3 px-4  text-black">{appointment.service}</td>
+                        <td className="py-3 px-4  text-black">{appointment.appointment}</td>
+                        <td className="py-3 px-4  text-black">{appointment.message}</td>
+                        <td className="py-3 px-4  text-black">
+                          <button
+                            onClick={() => handleEditAppointment(appointment)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded w-full"
+                          >
+                            تعديل
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleDeleteAppointment(appointment.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
+                          >
+                            حذف
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {editingAppointment && (
+              <div className="mt-6" ref={editRef}>
+                <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
+                  تعديل الموعد
+                </h3>
+                <div className="mb-3">
+                  <TextInput
+                    placeholder="الاسم"
+                    name="name"
+                    value={editingAppointment.name}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="رقم الهاتف"
+                    name="phone"
+                    value={editingAppointment.phone}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="الايميل"
+                    name="email"
+                    value={editingAppointment.email}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="المكان"
+                    name="clinicOrCenter"
+                    value={editingAppointment.clinicOrCenter}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="المحافظة"
+                    name="province"
+                    value={editingAppointment.province}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="التخصص"
+                    name="service"
+                    value={editingAppointment.service}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="المواعيد"
+                    name="appointment"
+                    value={editingAppointment.appointment}
+                    onChange={handleChange}
+                  />
+                  <TextInput
+                    placeholder="الرسالة"
+                    name="message"
+                    value={editingAppointment.message}
+                    onChange={handleChange}
+                  />
+                  <button
+                    onClick={handleSaveAppointment}
+                    className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full sm:w-auto"
+                  >
+                    حفظ التعديلات
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* {activeTab === 2 && (
+          <Statistics 
+            appointments={appointments}
+            onAddAppointment={handleAddAppointment}
+          />
+        )} */}
+
+        {activeTab === 2 && (
+          <Statistics 
+            appointments={appointments}
+            users={users}
+          />
         )}
       </div>
     </div>
   );
 };
 
-export default UserTable;
+const ErrorBoundary = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = () => setHasError(true);
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, []);
+
+  if (hasError) {
+    return <div>حدث خطأ ما. يرجى إعادة تحميل الصفحة.</div>;
+  }
+
+  return children;
+};
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <UserTable />
+    </ErrorBoundary>
+  );
+}

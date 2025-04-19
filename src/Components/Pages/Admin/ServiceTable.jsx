@@ -12,6 +12,33 @@ import {
 } from "firebase/firestore";
 import AdminServices from "./AdminServices";
 
+// مكون منفصل للصف في الجدول
+const TableRow = ({ clinic, center, index, onEdit, onDelete }) => (
+  <tr className="border-b hover:bg-gray-50 transition-colors duration-200">
+    <td className="py-4 px-6">{index + 1}</td>
+    <td className="py-4 px-6 font-medium">{clinic.name}</td>
+    <td className="py-4 px-6 text-gray-600">{clinic.address || "بدون عنوان"}</td>
+    <td className="py-4 px-6 font-medium">{center?.name || "غير معروف"}</td>
+    <td className="py-4 px-6 text-gray-600">{center?.address || "بدون عنوان"}</td>
+    <td className="py-4 px-6">
+      <button 
+        onClick={() => onEdit(clinic, center)} 
+        className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+      >
+        تعديل
+      </button>
+    </td>
+    <td className="py-4 px-6">
+      <button 
+        onClick={() => onDelete(clinic.id)} 
+        className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+      >
+        حذف
+      </button>
+    </td>
+  </tr>
+);
+
 const ServiceTable = () => {
   const [provinces, setProvinces] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -199,197 +226,219 @@ const ServiceTable = () => {
 
   return (
     <>
-      <div className="pb-8 px-4 md:ps-[11rem]">
-        <div className="bg-white p-6 rounded-lg shadow-lg mt-8">
-          <h2 className="text-3xl font-semibold text-blue-700 mb-6 text-center">
+      <div className="pb-8 px-4 pe-[5rem] max-w-7xl mx-auto">
+        <div className="bg-white p-8 rounded-xl shadow-lg mt-8">
+          <h2 className="text-3xl font-bold text-blue-800 mb-8 text-center">
             إدارة المحافظات والعيادات والمراكز
           </h2>
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-            placeholder="اسم المحافظة الجديدة"
-            value={newProvince}
-            onChange={(e) => setNewProvince(e.target.value)}
-          />
-          <button
-            onClick={handleAddProvince}
-            className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded mb-4"
-          >
-            إضافة محافظة جديدة
-          </button>
-          <select
-            className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-            value={locationData.province}
-            onChange={(e) =>
-              setLocationData({ ...locationData, province: e.target.value })
-            }
-          >
-            <option value="">اختر المحافظة</option>
-            {provinces.map((province) => (
-              <option key={province.id} value={province.name}>
-                {province.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-            placeholder="اسم العيادة"
-            value={locationData.clinic}
-            onChange={(e) =>
-              setLocationData({ ...locationData, clinic: e.target.value })
-            }
-          />
-          <input
-            type="text"
-            className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-            placeholder="اسم المركز"
-            value={locationData.center}
-            onChange={(e) =>
-              setLocationData({ ...locationData, center: e.target.value })
-            }
-          />
-          <button
-            onClick={handleAddLocation}
-            className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded mb-4"
-          >
-            إضافة موقع جديد
-          </button>
+          
+          <div className="space-y-6">
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  إضافة محافظة جديدة
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="اسم المحافظة الجديدة"
+                  value={newProvince}
+                  onChange={(e) => setNewProvince(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={handleAddProvince}
+                className="bg-green-500 hover:bg-green-600 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
+              >
+                إضافة محافظة
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  المحافظة
+                </label>
+                <select
+                  className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  value={locationData.province}
+                  onChange={(e) =>
+                    setLocationData({ ...locationData, province: e.target.value })
+                  }
+                >
+                  <option value="">اختر المحافظة</option>
+                  {provinces.map((province) => (
+                    <option key={province.id} value={province.name}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  العيادة
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="اسم العيادة"
+                  value={locationData.clinic}
+                  onChange={(e) =>
+                    setLocationData({ ...locationData, clinic: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  المركز
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="اسم المركز"
+                  value={locationData.center}
+                  onChange={(e) =>
+                    setLocationData({ ...locationData, center: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddLocation}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
+            >
+              إضافة موقع جديد
+            </button>
+          </div>
+
           {editData && (
-            <>
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-                placeholder="تعديل اسم العيادة"
-                value={editData.clinic}
-                onChange={(e) =>
-                  setEditData({ ...editData, clinic: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-                placeholder="تعديل عنوان العيادة"
-                value={editData.clinicAddress || ""}
-                onChange={(e) =>
-                  setEditData({ ...editData, clinicAddress: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-                placeholder="تعديل اسم المركز"
-                value={editData.center}
-                onChange={(e) =>
-                  setEditData({ ...editData, center: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                className="border border-gray-300 py-2 px-4 rounded w-full mb-4"
-                placeholder="تعديل عنوان المركز"
-                value={editData.centerAddress || ""}
-                onChange={(e) =>
-                  setEditData({ ...editData, centerAddress: e.target.value })
-                }
-              />
+            <div className="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">تعديل الموقع</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    اسم العيادة
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="تعديل اسم العيادة"
+                    value={editData.clinic}
+                    onChange={(e) =>
+                      setEditData({ ...editData, clinic: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    عنوان العيادة
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="تعديل عنوان العيادة"
+                    value={editData.clinicAddress || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, clinicAddress: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    اسم المركز
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="تعديل اسم المركز"
+                    value={editData.center}
+                    onChange={(e) =>
+                      setEditData({ ...editData, center: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    عنوان المركز
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="تعديل عنوان المركز"
+                    value={editData.centerAddress || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, centerAddress: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
               <button
                 onClick={handleEditLocation}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4"
+                className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
               >
-                تعديل الموقع
+                حفظ التعديلات
               </button>
-            </>
+            </div>
           )}
         </div>
 
         {provinces.map((province) => (
-          <div
-            key={province.id}
-            className="bg-white p-6 rounded-lg shadow-lg mt-8"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-blue-700 mb-4">
-                {province.name}
-              </h2>
+          <div key={province.id} className="bg-white p-8 rounded-xl shadow-lg mt-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-blue-800">{province.name}</h2>
               <button
                 onClick={() => handleDeleteProvince(province.id)}
-                className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4"
+                className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm font-medium"
               >
-                حذف
+                حذف المحافظة
               </button>
             </div>
 
-            <table className="w-full border border-gray-300 text-left mb-4">
-              <thead className="bg-gray-200 text-gray-700">
-                <tr>
-                  <th className="py-3 px-4">#</th>
-                  <th className="py-3 px-4">اسم العيادة</th>
-                  <th className="py-3 px-4">عنوان العيادة</th>
-                  <th className="py-3 px-4">اسم المركز</th>
-                  <th className="py-3 px-4">عنوان المركز</th> {/* إضافة عنوان المركز */}
-                  <th className="py-3 px-5">تعديل</th>
-                  <th className="py-3 px-5">حذف</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clinics
-                  .filter((clinic) => clinic.provinceId === province.id)
-                  .map((clinic, index) => {
-                    const center = centers.find(
-                      (center) => center.clinicId === clinic.id
-                    );
-                    return (
-                      <tr
-                        key={clinic.id}
-                        className="border-b hover:bg-gray-100"
-                      >
-                        <td className="py-3 px-4">{index + 1}</td>
-                        <td className="py-3 px-4">{clinic.name}</td>
-                        <td className="py-3 px-4">
-                          {clinic.address || "بدون عنوان"}
-                        </td>
-                        <td className="py-3 px-4">
-                          {center?.name || "غير معروف"}
-                        </td>
-                        <td className="py-3 px-4">
-                          {center?.address || "بدون عنوان"}
-                        </td>{" "}
-                        {/* عرض عنوان المركز */}
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={() =>
-                              setEditData({
-                                clinicId: clinic.id,
-                                clinic: clinic.name,
-                                clinicAddress: clinic.address || "",
-                                centerId: center?.id,
-                                center: center?.name || "",
-                                centerAddress: center?.address || "",
-                              })
-                            }
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
-                          >
-                            تعديل
-                          </button>
-                        </td>
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={() => handleDeleteClinic(clinic.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
-                          >
-                            حذف
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-700">
+                    <th className="py-4 px-6 text-right font-semibold">#</th>
+                    <th className="py-4 px-6 text-right font-semibold">اسم العيادة</th>
+                    <th className="py-4 px-6 text-right font-semibold">عنوان العيادة</th>
+                    <th className="py-4 px-6 text-right font-semibold">اسم المركز</th>
+                    <th className="py-4 px-6 text-right font-semibold">عنوان المركز</th>
+                    <th className="py-4 px-6 text-right font-semibold">تعديل</th>
+                    <th className="py-4 px-6 text-right font-semibold">حذف</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clinics
+                    .filter((clinic) => clinic.provinceId === province.id)
+                    .map((clinic, index) => {
+                      const center = centers.find(
+                        (center) => center.clinicId === clinic.id
+                      );
+                      return (
+                        <TableRow
+                          key={clinic.id}
+                          clinic={clinic}
+                          center={center}
+                          index={index}
+                          onEdit={(clinic, center) => setEditData({
+                            clinicId: clinic.id,
+                            clinic: clinic.name,
+                            clinicAddress: clinic.address || "",
+                            centerId: center?.id,
+                            center: center?.name || "",
+                            centerAddress: center?.address || ""
+                          })}
+                          onDelete={handleDeleteClinic}
+                        />
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))}
       </div>
-      <AdminServices />
     </>
   );
 };

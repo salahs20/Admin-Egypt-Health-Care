@@ -1,26 +1,29 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
-import HeaderAdmin from "../Component/HeaderAdmin";
-import ServiceTable from "../Pages/Admin/ServiceTable";
-import AppointmentTable from "../Pages/Admin/AppointmentTable";
-import UserTable from "../Pages/Admin/UserTable";
+
 import SideBar from "../Pages/Admin/SideBar";
+import AppointmentTable from "../Pages/Admin/AppointmentTable";
+import AdminServices from "../Pages/Admin/AdminServices";
+import ServiceTable from "../Pages/Admin/ServiceTable";
+import UserTable from "../Pages/Admin/UserTable";
 import Help from "../Pages/Admin/Help";
+
+const HeaderAdmin = () => {
+ 
+};
 
 const AdminLayout = () => {
   return (
     <>
       <HeaderAdmin />
       <SideBar />
-      <div className="pt-16  md:ps-[16rem] text-center text-blue-700 text-5xl font-mono font-bold">
-        {" "}
-        Hello 
-      </div>
+     
       <Routes future={{ v7_startTransition: true }}>
         <Route path="/" element={<ServiceTable />} />
         <Route path="/appointment" element={<AppointmentTable />} />
         <Route path="/user" element={<UserTable />} />
+        <Route path="/aservice" element={<AdminServices />} />
 
       </Routes>
       <Help/>
