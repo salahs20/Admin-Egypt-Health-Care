@@ -8,13 +8,11 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { Tabs, Tab, Box } from '@mui/material';
-import ExportButton from '../../Shared/ExportButton';
+import { Tabs, Tab, Box } from "@mui/material";
+import ExportButton from "../../Shared/ExportButton";
 
-import AdvancedFilter from '../../Shared/AdvancedFilter';
-import Calendar from '../../Shared/Calendar';
-import Statistics from '../../Shared/Statistics';
-import { toast } from 'react-toastify';
+import Statistics from "../../Shared/Statistics";
+import { toast } from "react-toastify";
 
 const ERROR_MESSAGES = {
   fetchUsers: "حدث خطأ أثناء تحميل بيانات المستخدمين.",
@@ -84,9 +82,9 @@ const UserTable = () => {
       setLoadingAppointments(true);
       try {
         const querySnapshot = await getDocs(collection(db, "Appointments"));
-        const fetchedAppointments = querySnapshot.docs.map((doc) => ({ 
-          id: doc.id, 
-          ...doc.data() 
+        const fetchedAppointments = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
         }));
         setAppointments(fetchedAppointments);
         setFilteredAppointments(fetchedAppointments);
@@ -108,7 +106,9 @@ const UserTable = () => {
           appointments.filter((appointment) => appointment.id !== appointmentId)
         );
         setFilteredAppointments(
-          filteredAppointments.filter((appointment) => appointment.id !== appointmentId)
+          filteredAppointments.filter(
+            (appointment) => appointment.id !== appointmentId
+          )
         );
         toast.success("تم حذف الموعد بنجاح");
       } catch (error) {
@@ -197,7 +197,9 @@ const UserTable = () => {
           user.id === userId ? { ...user, isAdmin: newAdminStatus } : user
         )
       );
-      toast.success(`تم ${newAdminStatus ? 'تعيين' : 'إزالة'} صلاحيات الأدمن بنجاح`);
+      toast.success(
+        `تم ${newAdminStatus ? "تعيين" : "إزالة"} صلاحيات الأدمن بنجاح`
+      );
     } catch (error) {
       handleError(error, ERROR_MESSAGES.toggleAdmin);
     }
@@ -229,7 +231,9 @@ const UserTable = () => {
       ? appointment.phone
       : `+20${appointment.phone}`;
     const message = `مرحبًا ${appointment.name}،\n\nتفاصيل الموعد الخاص بك:\n...`;
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
     window.open(whatsappURL, "_blank");
   };
 
@@ -264,13 +268,18 @@ const UserTable = () => {
   const handleFilterAppointments = (filters) => {
     const filtered = appointments.filter((appointment) => {
       const matchesProvince = filters.province
-        ? appointment.province.toLowerCase().includes(filters.province.toLowerCase())
+        ? appointment.province
+            .toLowerCase()
+            .includes(filters.province.toLowerCase())
         : true;
       const matchesService = filters.service
-        ? appointment.service.toLowerCase().includes(filters.service.toLowerCase())
+        ? appointment.service
+            .toLowerCase()
+            .includes(filters.service.toLowerCase())
         : true;
       const matchesDate = filters.date
-        ? new Date(appointment.appointment).toDateString() === new Date(filters.date).toDateString()
+        ? new Date(appointment.appointment).toDateString() ===
+          new Date(filters.date).toDateString()
         : true;
 
       return matchesProvince && matchesService && matchesDate;
@@ -281,7 +290,10 @@ const UserTable = () => {
 
   const handleAddAppointment = async (newAppointment) => {
     try {
-      const docRef = await addDoc(collection(db, "Appointments"), newAppointment);
+      const docRef = await addDoc(
+        collection(db, "Appointments"),
+        newAppointment
+      );
       const appointmentWithId = { id: docRef.id, ...newAppointment };
       setAppointments([...appointments, appointmentWithId]);
       setFilteredAppointments([...filteredAppointments, appointmentWithId]);
@@ -296,9 +308,9 @@ const UserTable = () => {
   );
 
   const filterFields = [
-    { name: 'province', label: 'المحافظة', type: 'text' },
-    { name: 'service', label: 'التخصص', type: 'text' },
-    { name: 'date', label: 'التاريخ', type: 'date' }
+    { name: "province", label: "المحافظة", type: "text" },
+    { name: "service", label: "التخصص", type: "text" },
+    { name: "date", label: "التاريخ", type: "date" },
   ];
 
   return (
@@ -329,17 +341,23 @@ const UserTable = () => {
               <TextInput
                 placeholder="الاسم"
                 value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, name: e.target.value })
+                }
               />
               <TextInput
                 placeholder="البريد الإلكتروني"
                 value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
               />
               <TextInput
                 placeholder="رقم الهاتف"
                 value={newUser.phone}
-                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, phone: e.target.value })
+                }
               />
               <button
                 onClick={handleAddUser}
@@ -367,9 +385,10 @@ const UserTable = () => {
               }))}
               filename="users"
             />
-           
 
-            {loadingUsers ? <p>Loading users...</p> : (
+            {loadingUsers ? (
+              <p>Loading users...</p>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-300 text-left">
                   <thead className="bg-gray-200 text-gray-700">
@@ -392,7 +411,7 @@ const UserTable = () => {
                         <td className="py-3 px-4  text-black">{user.name}</td>
                         <td className="py-3 px-4  text-black">{user.email}</td>
                         <td className="py-3 px-4  text-black">{user.phone}</td>
-                        <td className="py-3 px-4"> 
+                        <td className="py-3 px-4">
                           <button
                             onClick={() => handleToggleAdmin(user.id)}
                             className={`py-1 px-3 rounded w-full ${
@@ -428,9 +447,10 @@ const UserTable = () => {
             {/* <AdvancedFilter onFilter={handleFilterAppointments} fields={filterFields} /> */}
 
             <ExportButton data={filteredAppointments} filename="appointments" />
-      
 
-            {loadingAppointments ? <p>Loading appointments...</p> : (
+            {loadingAppointments ? (
+              <p>Loading appointments...</p>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-300 text-left">
                   <thead className="bg-gray-200 text-gray-700">
@@ -452,11 +472,17 @@ const UserTable = () => {
                     {filteredAppointments.map((appointment, index) => (
                       <tr
                         key={appointment.id}
-                        ref={editingAppointment?.id === appointment.id ? editRef : null}
+                        ref={
+                          editingAppointment?.id === appointment.id
+                            ? editRef
+                            : null
+                        }
                         className="border-b hover:bg-gray-100"
                       >
                         <td className="py-3 px-4  text-black">{index + 1}</td>
-                        <td className="py-3 px-4  text-black">{appointment.name}</td>
+                        <td className="py-3 px-4  text-black">
+                          {appointment.name}
+                        </td>
                         <td className="py-3 px-4 ">
                           <button
                             onClick={() => handleWhatsAppClick(appointment)}
@@ -476,10 +502,18 @@ const UserTable = () => {
                         <td className="py-3 px-4">
                           {appointment.type} {appointment.clinicOrCenter}
                         </td>
-                        <td className="py-3 px-4  text-black">{appointment.province}</td>
-                        <td className="py-3 px-4  text-black">{appointment.service}</td>
-                        <td className="py-3 px-4  text-black">{appointment.appointment}</td>
-                        <td className="py-3 px-4  text-black">{appointment.message}</td>
+                        <td className="py-3 px-4  text-black">
+                          {appointment.province}
+                        </td>
+                        <td className="py-3 px-4  text-black">
+                          {appointment.service}
+                        </td>
+                        <td className="py-3 px-4  text-black">
+                          {appointment.appointment}
+                        </td>
+                        <td className="py-3 px-4  text-black">
+                          {appointment.message}
+                        </td>
                         <td className="py-3 px-4  text-black">
                           <button
                             onClick={() => handleEditAppointment(appointment)}
@@ -490,7 +524,9 @@ const UserTable = () => {
                         </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleDeleteAppointment(appointment.id)}
+                            onClick={() =>
+                              handleDeleteAppointment(appointment.id)
+                            }
                             className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
                           >
                             حذف
@@ -577,10 +613,7 @@ const UserTable = () => {
         )} */}
 
         {activeTab === 2 && (
-          <Statistics 
-            appointments={appointments}
-            users={users}
-          />
+          <Statistics appointments={appointments} users={users} />
         )}
       </div>
     </div>
