@@ -47,6 +47,9 @@ const UserTable = () => {
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [commentText, setCommentText] = useState("");
   const editRef = useRef(null);
 
   const handleError = (error, message) => {
@@ -292,16 +295,98 @@ const UserTable = () => {
 
   const handleAddAppointment = async (newAppointment) => {
     try {
-      const docRef = await addDoc(
-        collection(db, "Appointments"),
-        newAppointment
-      );
-      const appointmentWithId = { id: docRef.id, ...newAppointment };
+      const appointmentData = {
+        ...newAppointment,
+        registrationDate: new Date().toISOString(),
+        dataSent: false,
+        comments: ""
+      };
+      const docRef = await addDoc(collection(db, "Appointments"), appointmentData);
+      const appointmentWithId = { id: docRef.id, ...appointmentData };
       setAppointments([...appointments, appointmentWithId]);
       setFilteredAppointments([...filteredAppointments, appointmentWithId]);
       toast.success("تم إضافة الموعد بنجاح");
     } catch (error) {
       handleError(error, ERROR_MESSAGES.addAppointment);
+    }
+  };
+
+  const handleToggleAppointmentDataSent = async (appointmentId) => {
+    try {
+      const appointmentRef = doc(db, "Appointments", appointmentId);
+      const updatedAppointment = appointments.find((app) => app.id === appointmentId);
+      const newDataSentStatus = !updatedAppointment.dataSent;
+      await updateDoc(appointmentRef, { dataSent: newDataSentStatus });
+      setAppointments(
+        appointments.map((app) =>
+          app.id === appointmentId ? { ...app, dataSent: newDataSentStatus } : app
+        )
+      );
+      setFilteredAppointments(
+        filteredAppointments.map((app) =>
+          app.id === appointmentId ? { ...app, dataSent: newDataSentStatus } : app
+        )
+      );
+      toast.success(
+        `تم ${newDataSentStatus ? "تحديد" : "إلغاء تحديد"} إرسال البيانات بنجاح`
+      );
+    } catch (error) {
+      handleError(error, "حدث خطأ أثناء تحديث حالة إرسال البيانات");
+    }
+  };
+
+  const handleUpdateAppointmentComments = async (appointmentId, comments) => {
+    try {
+      const appointmentRef = doc(db, "Appointments", appointmentId);
+      await updateDoc(appointmentRef, { comments });
+      setAppointments(
+        appointments.map((app) =>
+          app.id === appointmentId ? { ...app, comments } : app
+        )
+      );
+      setFilteredAppointments(
+        filteredAppointments.map((app) =>
+          app.id === appointmentId ? { ...app, comments } : app
+        )
+      );
+      toast.success("تم تحديث التعليقات بنجاح");
+    } catch (error) {
+      handleError(error, "حدث خطأ أثناء تحديث التعليقات");
+    }
+  };
+
+  const handleOpenCommentModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setCommentText(appointment.comments || "");
+    setShowCommentModal(true);
+  };
+
+  const handleCloseCommentModal = () => {
+    setShowCommentModal(false);
+    setSelectedAppointment(null);
+    setCommentText("");
+  };
+
+  const handleSaveComment = async () => {
+    if (selectedAppointment) {
+      try {
+        const appointmentRef = doc(db, "Appointments", selectedAppointment.id);
+        await updateDoc(appointmentRef, { comments: commentText });
+        setAppointments(
+          appointments.map((app) =>
+            app.id === selectedAppointment.id ? { ...app, comments: commentText } : app
+          )
+        );
+        setFilteredAppointments(
+          filteredAppointments.map((app) =>
+            app.id === selectedAppointment.id ? { ...app, comments: commentText } : app
+          )
+        );
+        toast.success("تم حفظ التعليق بنجاح");
+        handleCloseCommentModal();
+      } catch (error) {
+        handleError(error, "حدث خطأ أثناء حفظ التعليق");
+      }
     }
   };
 
@@ -466,6 +551,9 @@ const UserTable = () => {
                       <th className="py-3 px-4">التخصص</th>
                       <th className="py-3 px-4">المواعيد</th>
                       <th className="py-3 px-4">الرسالة</th>
+                      <th className="py-3 px-4">حالة الإرسال</th>
+                      {/* <th className="py-3 px-4">تاريخ التسجيل</th> */}
+                      <th className="py-3 px-4">التعليقات</th>
                       <th className="py-3 px-4">تعديل</th>
                       <th className="py-3 px-4">حذف</th>
                     </tr>
@@ -474,18 +562,12 @@ const UserTable = () => {
                     {filteredAppointments.map((appointment, index) => (
                       <tr
                         key={appointment.id}
-                        ref={
-                          editingAppointment?.id === appointment.id
-                            ? editRef
-                            : null
-                        }
+                        ref={editingAppointment?.id === appointment.id ? editRef : null}
                         className="border-b hover:bg-gray-100"
                       >
-                        <td className="py-3 px-4  text-black">{index + 1}</td>
-                        <td className="py-3 px-4  text-black">
-                          {appointment.name}
-                        </td>
-                        <td className="py-3 px-4 ">
+                        <td className="py-3 px-4 text-black">{index + 1}</td>
+                        <td className="py-3 px-4 text-black">{appointment.name}</td>
+                        <td className="py-3 px-4">
                           <button
                             onClick={() => handleWhatsAppClick(appointment)}
                             className="text-blue-500 hover:underline"
@@ -504,12 +586,8 @@ const UserTable = () => {
                         <td className="py-3 px-4">
                           {appointment.type} {appointment.clinicOrCenter}
                         </td>
-                        <td className="py-3 px-4  text-black">
-                          {appointment.province}
-                        </td>
-                        <td className="py-3 px-4  text-black">
-                          {appointment.service}
-                        </td>
+                        <td className="py-3 px-4 text-black">{appointment.province}</td>
+                        <td className="py-3 px-4 text-black">{appointment.service}</td>
                         <td className="py-3 px-4 text-black">
                           {new Date(appointment.appointment)
                             .toLocaleString("ar-EG", {
@@ -523,11 +601,30 @@ const UserTable = () => {
                             })
                             .replace("،", " - ")}
                         </td>
-
-                        <td className="py-3 px-4  text-black">
-                          {appointment.message}
+                        <td className="py-3 px-4 text-black">{appointment.message}</td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleToggleAppointmentDataSent(appointment.id)}
+                            className={`py-1 px-3 rounded w-full ${
+                              appointment.dataSent ? "bg-green-500" : "bg-yellow-500"
+                            } text-white`}
+                          >
+                            {appointment.dataSent ? "تم الإرسال" : "لم يتم الإرسال"}
+                          </button>
                         </td>
-                        <td className="py-3 px-4  text-black">
+                        {/* <td className="py-3 px-4 text-black">
+                          {new Date(appointment.registrationDate || appointment.appointment)
+                            .toLocaleDateString('ar-EG')}
+                        </td> */}
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleOpenCommentModal(appointment)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded w-full"
+                          >
+                            {appointment.comments ? "تعديل التعليق" : "إضافة تعليق"}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 text-black">
                           <button
                             onClick={() => handleEditAppointment(appointment)}
                             className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded w-full"
@@ -537,9 +634,7 @@ const UserTable = () => {
                         </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() =>
-                              handleDeleteAppointment(appointment.id)
-                            }
+                            onClick={() => handleDeleteAppointment(appointment.id)}
                             className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
                           >
                             حذف
@@ -627,6 +722,35 @@ const UserTable = () => {
 
         {activeTab === 2 && (
           <Statistics appointments={appointments} users={users} />
+        )}
+
+        {/* Comment Modal */}
+        {showCommentModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-lg mx-4">
+              <h3 className="text-xl font-semibold text-blue-700 mb-4">إضافة تعليق</h3>
+              <textarea
+                className="w-full p-3 border rounded-lg mb-4 min-h-[150px]"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="اكتب تعليقك هنا..."
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleCloseCommentModal}
+                  className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleSaveComment}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                >
+                  حفظ
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
