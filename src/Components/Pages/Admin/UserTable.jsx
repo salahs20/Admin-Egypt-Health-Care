@@ -50,6 +50,14 @@ const UserTable = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [commentText, setCommentText] = useState("");
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortBy, setSortBy] = useState('name');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [searchFilters, setSearchFilters] = useState({
+    name: '',
+    phone: '',
+    email: ''
+  });
   const editRef = useRef(null);
 
   const handleError = (error, message) => {
@@ -57,6 +65,26 @@ const UserTable = () => {
     setErrorMessage(message);
     toast.error(message);
   };
+
+  const handleSearchChange = (e) => {
+    const { name, value } = e.target;
+    setSearchFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  useEffect(() => {
+    const filtered = appointments.filter(appointment => {
+      const nameMatch = appointment.name.toLowerCase().includes(searchFilters.name.toLowerCase());
+      const phoneMatch = appointment.phone.toLowerCase().includes(searchFilters.phone.toLowerCase());
+      const emailMatch = appointment.email.toLowerCase().includes(searchFilters.email.toLowerCase());
+      
+      return nameMatch && phoneMatch && emailMatch;
+    });
+
+    setFilteredAppointments(filtered);
+  }, [searchFilters, appointments]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -80,6 +108,19 @@ const UserTable = () => {
     fetchUsers();
   }, []);
 
+  const handleSearch = (searchValue) => {
+    setAppointmentSearchTerm(searchValue);
+    const filtered = appointments.filter(appointment => {
+      const searchLower = searchValue.toLowerCase();
+      return (
+        appointment.name?.toLowerCase().includes(searchLower) ||
+        appointment.phone?.toLowerCase().includes(searchLower) ||
+        appointment.email?.toLowerCase().includes(searchLower)
+      );
+    });
+    setFilteredAppointments(filtered);
+  };
+
   useEffect(() => {
     const fetchAppointments = async () => {
       setLoadingAppointments(true);
@@ -89,8 +130,23 @@ const UserTable = () => {
           id: doc.id,
           ...doc.data(),
         }));
-        setAppointments(fetchedAppointments);
-        setFilteredAppointments(fetchedAppointments);
+        // Sort appointments based on selected criteria
+        const sortedAppointments = fetchedAppointments.sort((a, b) => {
+          if (sortBy === 'date') {
+            const dateA = new Date(a.registrationDate);
+            const dateB = new Date(b.registrationDate);
+            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+          } else {
+            // Sort by name (default)
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            return sortOrder === 'desc' 
+              ? nameB.localeCompare(nameA, 'ar')
+              : nameA.localeCompare(nameB, 'ar');
+          }
+        });
+        setAppointments(sortedAppointments);
+        setFilteredAppointments(sortedAppointments);
       } catch (error) {
         handleError(error, ERROR_MESSAGES.fetchAppointments);
       } finally {
@@ -99,7 +155,7 @@ const UserTable = () => {
     };
 
     fetchAppointments();
-  }, []);
+  }, [sortOrder, sortBy]);
 
   const handleDeleteAppointment = async (appointmentId) => {
     if (window.confirm("هل أنت متأكد من أنك تريد حذف هذا الموعد؟")) {
@@ -122,11 +178,12 @@ const UserTable = () => {
 
   const handleEditAppointment = (appointment) => {
     setEditingAppointment(appointment);
-    setTimeout(() => {
-      if (editRef.current) {
-        editRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 100);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingAppointment(null);
   };
 
   const handleSaveAppointment = async () => {
@@ -148,7 +205,7 @@ const UserTable = () => {
               : appointment
           )
         );
-        setEditingAppointment(null);
+        handleCloseEditModal();
         toast.success("تم تحديث الموعد بنجاح");
       } catch (error) {
         handleError(error, ERROR_MESSAGES.updateAppointment);
@@ -390,6 +447,24 @@ const UserTable = () => {
     }
   };
 
+  const handleSortByRegistrationDate = () => {
+    if (sortBy === 'date') {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy('date');
+      setSortOrder('desc');
+    }
+  };
+
+  const handleSortByName = () => {
+    if (sortBy === 'name') {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy('name');
+      setSortOrder('asc');
+    }
+  };
+
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -464,12 +539,7 @@ const UserTable = () => {
             </div>
 
             <ExportButton
-              data={filteredUsers.map(({ id, name, email, phone }) => ({
-                id,
-                name,
-                email,
-                phone,
-              }))}
+              data={filteredUsers}
               filename="users"
             />
 
@@ -531,9 +601,20 @@ const UserTable = () => {
               جدول الحجز
             </h2>
 
-            {/* <AdvancedFilter onFilter={handleFilterAppointments} fields={filterFields} /> */}
+            {/* Single Search Box */}
+            <div className="mb-6">
+              <div className="max-w-xl mx-auto">
+                <input
+                  type="text"
+                  value={appointmentSearchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="ابحث بالاسم أو رقم الموبايل أو البريد الإلكتروني"
+                  className="border border-gray-300 py-2 px-4 rounded w-full text-right"
+                />
+              </div>
+            </div>
 
-            <ExportButton data={filteredAppointments} filename="appointments" />
+           
 
             {loadingAppointments ? (
               <p>Loading appointments...</p>
@@ -543,7 +624,15 @@ const UserTable = () => {
                   <thead className="bg-gray-200 text-gray-700">
                     <tr>
                       <th className="py-3 px-4">#</th>
-                      <th className="py-3 px-4">الاسم</th>
+                      <th className="py-3 px-4">
+                        <button 
+                          onClick={handleSortByName}
+                          className="flex items-center gap-1"
+                        >
+                          الاسم
+                          {sortBy === 'name' && (sortOrder === 'desc' ? '↑' : '↓')}
+                        </button>
+                      </th>
                       <th className="py-3 px-4">رقم الهاتف</th>
                       <th className="py-3 px-4">الايميل</th>
                       <th className="py-3 px-4">المكان </th>
@@ -552,7 +641,15 @@ const UserTable = () => {
                       <th className="py-3 px-4">المواعيد</th>
                       <th className="py-3 px-4">الرسالة</th>
                       <th className="py-3 px-4">حالة الإرسال</th>
-                      {/* <th className="py-3 px-4">تاريخ التسجيل</th> */}
+                      <th className="py-3 px-4">
+                        <button 
+                          onClick={handleSortByRegistrationDate}
+                          className="flex items-center gap-1"
+                        >
+                          تاريخ التسجيل
+                          {sortBy === 'date' && (sortOrder === 'desc' ? '↑' : '↓')}
+                        </button>
+                      </th>
                       <th className="py-3 px-4">التعليقات</th>
                       <th className="py-3 px-4">تعديل</th>
                       <th className="py-3 px-4">حذف</th>
@@ -612,10 +709,17 @@ const UserTable = () => {
                             {appointment.dataSent ? "تم الإرسال" : "لم يتم الإرسال"}
                           </button>
                         </td>
-                        {/* <td className="py-3 px-4 text-black">
-                          {new Date(appointment.registrationDate || appointment.appointment)
-                            .toLocaleDateString('ar-EG')}
-                        </td> */}
+                        <td className="py-3 px-4">
+                          {new Date(appointment.registrationDate)
+                            .toLocaleString('ar-EG', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                        </td>
                         <td className="py-3 px-4">
                           <button
                             onClick={() => handleOpenCommentModal(appointment)}
@@ -647,81 +751,227 @@ const UserTable = () => {
               </div>
             )}
 
-            {editingAppointment && (
-              <div className="mt-6" ref={editRef}>
-                <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
-                  تعديل الموعد
-                </h3>
-                <div className="mb-3">
-                  <TextInput
-                    placeholder="الاسم"
-                    name="name"
-                    value={editingAppointment.name}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="رقم الهاتف"
-                    name="phone"
-                    value={editingAppointment.phone}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="الايميل"
-                    name="email"
-                    value={editingAppointment.email}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="المكان"
-                    name="clinicOrCenter"
-                    value={editingAppointment.clinicOrCenter}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="المحافظة"
-                    name="province"
-                    value={editingAppointment.province}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="التخصص"
-                    name="service"
-                    value={editingAppointment.service}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="المواعيد"
-                    name="appointment"
-                    value={editingAppointment.appointment}
-                    onChange={handleChange}
-                  />
-                  <TextInput
-                    placeholder="الرسالة"
-                    name="message"
-                    value={editingAppointment.message}
-                    onChange={handleChange}
-                  />
-                  <button
-                    onClick={handleSaveAppointment}
-                    className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded w-full sm:w-auto"
-                  >
-                    حفظ التعديلات
-                  </button>
+            {/* Edit Modal */}
+            {showEditModal && editingAppointment && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-2xl font-semibold text-blue-700 mb-4 text-center">
+                    تعديل الموعد
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">الاسم</label>
+                      <TextInput
+                        placeholder="الاسم"
+                        name="name"
+                        value={editingAppointment.name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">رقم الهاتف</label>
+                      <TextInput
+                        placeholder="رقم الهاتف"
+                        name="phone"
+                        value={editingAppointment.phone}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">الايميل</label>
+                      <TextInput
+                        placeholder="الايميل"
+                        name="email"
+                        value={editingAppointment.email}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">المكان</label>
+                      <TextInput
+                        placeholder="المكان"
+                        name="clinicOrCenter"
+                        value={editingAppointment.clinicOrCenter}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">المحافظة</label>
+                      <TextInput
+                        placeholder="المحافظة"
+                        name="province"
+                        value={editingAppointment.province}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">التخصص</label>
+                      <TextInput
+                        placeholder="التخصص"
+                        name="service"
+                        value={editingAppointment.service}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">الموعد</label>
+                      <TextInput
+                        placeholder="الموعد"
+                        name="appointment"
+                        value={editingAppointment.appointment}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-gray-700 mb-2">الرسالة</label>
+                      <TextInput
+                        placeholder="الرسالة"
+                        name="message"
+                        value={editingAppointment.message}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      onClick={handleCloseEditModal}
+                      className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={handleSaveAppointment}
+                      className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                    >
+                      حفظ التغييرات
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </>
         )}
 
-        {/* {activeTab === 2 && (
-          <Statistics 
-            appointments={appointments}
-            onAddAppointment={handleAddAppointment}
-          />
-        )} */}
-
         {activeTab === 2 && (
-          <Statistics appointments={appointments} users={users} />
+          <div className="space-y-8">
+            <Statistics appointments={appointments} users={users} />
+            
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-blue-700 text-center">التحليل الإحصائي للمواعيد</h2>
+                <ExportButton 
+                  data={filteredAppointments}
+                  filename="statistics"
+                  statistics={{
+                    totalAppointments: appointments.length,
+                    totalUsers: users.length,
+                    bookedAppointments: appointments.filter(app => app.dataSent).length,
+                    availableSlots: appointments.filter(app => !app.dataSent).length,
+                    dataSent: appointments.filter(app => app.dataSent).length,
+                    notDataSent: appointments.filter(app => !app.dataSent).length,
+                    appointmentsByProvince: appointments.reduce((acc, app) => {
+                      acc[app.province] = (acc[app.province] || 0) + 1;
+                      return acc;
+                    }, {}),
+                    appointmentsByService: appointments.reduce((acc, app) => {
+                      acc[app.service] = (acc[app.service] || 0) + 1;
+                      return acc;
+                    }, {})
+                  }}
+                />
+              </div>
+              
+              {/* إجمالي المواعيد */}
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-4">إجمالي المواعيد: {appointments.length}</h3>
+              </div>
+
+              {/* حالة الإرسال */}
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-4">حالة الإرسال:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-green-100 p-4 rounded-lg">
+                    <p className="text-lg">تم الإرسال: {appointments.filter(app => app.dataSent).length}</p>
+                  </div>
+                  <div className="bg-yellow-100 p-4 rounded-lg">
+                    <p className="text-lg">لم يتم الإرسال: {appointments.filter(app => !app.dataSent).length}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* المواعيد حسب المحافظة */}
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-4">المواعيد حسب المحافظة:</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border border-gray-300">
+                    <thead className="bg-gray-200">
+                      <tr>
+                        <th className="py-3 px-4 text-right">المحافظة</th>
+                        <th className="py-3 px-4 text-right">عدد المواعيد</th>
+                        <th className="py-3 px-4 text-right">النسبة المئوية</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const provinceCount = appointments.reduce((acc, app) => {
+                          acc[app.province] = (acc[app.province] || 0) + 1;
+                          return acc;
+                        }, {});
+
+                        return Object.entries(provinceCount)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([province, count]) => (
+                            <tr key={province} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4">{province}</td>
+                              <td className="py-3 px-4">{count}</td>
+                              <td className="py-3 px-4">
+                                {((count / appointments.length) * 100).toFixed(1)}%
+                              </td>
+                            </tr>
+                          ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* المواعيد حسب التخصص */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">المواعيد حسب التخصص:</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border border-gray-300">
+                    <thead className="bg-gray-200">
+                      <tr>
+                        <th className="py-3 px-4 text-right">التخصص</th>
+                        <th className="py-3 px-4 text-right">عدد المواعيد</th>
+                        <th className="py-3 px-4 text-right">النسبة المئوية</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const serviceCount = appointments.reduce((acc, app) => {
+                          acc[app.service] = (acc[app.service] || 0) + 1;
+                          return acc;
+                        }, {});
+
+                        return Object.entries(serviceCount)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([service, count]) => (
+                            <tr key={service} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4">{service}</td>
+                              <td className="py-3 px-4">{count}</td>
+                              <td className="py-3 px-4">
+                                {((count / appointments.length) * 100).toFixed(1)}%
+                              </td>
+                            </tr>
+                          ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Comment Modal */}
