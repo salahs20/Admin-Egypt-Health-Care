@@ -5,24 +5,40 @@ import ExcelJS from 'exceljs';
 
 const ExportButton = ({ data, filename, statistics }) => {
   const handleExport = async () => {
-    // إنشاء ملف Excel جديد
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Admin System';
     workbook.lastModifiedBy = 'Admin System';
     workbook.created = new Date();
     workbook.modified = new Date();
 
-    // تنسيق العناوين
+    // تنسيق العناوين الرئيسية
     const headerStyle = {
       font: { bold: true, color: { argb: 'FFFFFF' }, size: 12 },
       fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
-      alignment: { horizontal: 'center', vertical: 'middle' },
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
       border: {
-        top: { style: 'thin' },
-        bottom: { style: 'thin' },
-        left: { style: 'thin' },
-        right: { style: 'thin' }
+        top: { style: 'thin', color: { argb: '000000' } },
+        bottom: { style: 'thin', color: { argb: '000000' } },
+        left: { style: 'thin', color: { argb: '000000' } },
+        right: { style: 'thin', color: { argb: '000000' } }
       }
+    };
+
+    // تنسيق الخلايا العادية
+    const cellStyle = {
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: {
+        top: { style: 'thin', color: { argb: '000000' } },
+        bottom: { style: 'thin', color: { argb: '000000' } },
+        left: { style: 'thin', color: { argb: '000000' } },
+        right: { style: 'thin', color: { argb: '000000' } }
+      }
+    };
+
+    // تنسيق الخلايا البديلة
+    const alternateCellStyle = {
+      ...cellStyle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F2F2F2' } }
     };
 
     // إضافة ورقة المواعيد
@@ -44,7 +60,7 @@ const ExportButton = ({ data, filename, statistics }) => {
 
     // إضافة بيانات المواعيد
     data.forEach((item, index) => {
-      appointmentsSheet.addRow({
+      const row = appointmentsSheet.addRow({
         id: index + 1,
         name: item.name,
         phone: item.phone,
@@ -73,6 +89,11 @@ const ExportButton = ({ data, filename, statistics }) => {
         }),
         comments: item.comments || ''
       });
+
+      // تطبيق التنسيق البديل على الصفوف
+      row.eachCell(cell => {
+        cell.style = index % 2 === 0 ? cellStyle : alternateCellStyle;
+      });
     });
 
     // تطبيق التنسيق على العناوين
@@ -80,18 +101,27 @@ const ExportButton = ({ data, filename, statistics }) => {
       cell.style = headerStyle;
     });
 
+    // إضافة الفلتر التلقائي لورقة المواعيد
+    appointmentsSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: appointmentsSheet.columnCount }
+    };
+
     // إذا كانت هناك إحصائيات، أضفها
     if (statistics) {
       // إحصائيات عامة
       const generalSheet = workbook.addWorksheet('إحصائيات عامة');
       generalSheet.columns = [
-        { header: 'نوع الإحصائية', key: 'type', width: 20 },
-        { header: 'القيمة', key: 'value', width: 15 }
+        { header: 'نوع الإحصائية', key: 'type', width: 25 },
+        { header: 'القيمة', key: 'value', width: 20 }
       ];
 
       const generalStats = {
         'إجمالي المواعيد': statistics.totalAppointments,
         'إجمالي المستخدمين': statistics.totalUsers,
+        'عدد التخصصات': statistics.totalSpecialties,
+        'عدد العيادات': statistics.totalClinics,
+        'عدد المراكز': statistics.totalCenters,
         'متوسط المواعيد اليومي': (statistics.totalAppointments / 30).toFixed(1),
         'المواعيد المحجوزة': statistics.bookedAppointments,
         'المواعيد المتاحة': statistics.availableSlots,
@@ -99,57 +129,125 @@ const ExportButton = ({ data, filename, statistics }) => {
         'لم يتم الإرسال': statistics.notDataSent || 0
       };
 
-      Object.entries(generalStats).forEach(([key, value]) => {
-        generalSheet.addRow({ type: key, value: value });
+      Object.entries(generalStats).forEach(([key, value], index) => {
+        const row = generalSheet.addRow({ type: key, value: value });
+        row.eachCell(cell => {
+          cell.style = index % 2 === 0 ? cellStyle : alternateCellStyle;
+        });
+      });
+
+      // تطبيق التنسيق على العناوين
+      generalSheet.getRow(1).eachCell(cell => {
+        cell.style = headerStyle;
       });
 
       // إحصائيات المحافظات
       const provinceSheet = workbook.addWorksheet('إحصائيات المحافظات');
       provinceSheet.columns = [
-        { header: 'المحافظة', key: 'province', width: 20 },
+        { header: 'المحافظة', key: 'province', width: 25 },
         { header: 'العدد', key: 'count', width: 15 },
         { header: 'النسبة المئوية', key: 'percentage', width: 15 }
       ];
 
       const provinceStats = Object.entries(statistics.appointmentsByProvince || {})
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
         .map(([province, count]) => ({
           province,
           count,
           percentage: `${((count / statistics.totalAppointments) * 100).toFixed(1)}%`
         }));
 
-      provinceStats.forEach(stat => {
-        provinceSheet.addRow(stat);
+      provinceStats.forEach((stat, index) => {
+        const row = provinceSheet.addRow(stat);
+        row.eachCell(cell => {
+          cell.style = index % 2 === 0 ? cellStyle : alternateCellStyle;
+        });
       });
+
+      // تطبيق التنسيق على العناوين
+      provinceSheet.getRow(1).eachCell(cell => {
+        cell.style = headerStyle;
+      });
+
+      // إضافة الفلتر التلقائي لورقة المحافظات
+      provinceSheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: provinceSheet.columnCount }
+      };
 
       // إحصائيات التخصصات
       const serviceSheet = workbook.addWorksheet('إحصائيات التخصصات');
       serviceSheet.columns = [
-        { header: 'التخصص', key: 'service', width: 20 },
+        { header: 'التخصص', key: 'service', width: 25 },
         { header: 'العدد', key: 'count', width: 15 },
         { header: 'النسبة المئوية', key: 'percentage', width: 15 }
       ];
 
       const serviceStats = Object.entries(statistics.appointmentsByService || {})
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
         .map(([service, count]) => ({
           service,
           count,
           percentage: `${((count / statistics.totalAppointments) * 100).toFixed(1)}%`
         }));
 
-      serviceStats.forEach(stat => {
-        serviceSheet.addRow(stat);
+      serviceStats.forEach((stat, index) => {
+        const row = serviceSheet.addRow(stat);
+        row.eachCell(cell => {
+          cell.style = index % 2 === 0 ? cellStyle : alternateCellStyle;
+        });
       });
 
       // تطبيق التنسيق على العناوين
-      [generalSheet, provinceSheet, serviceSheet].forEach(sheet => {
-        sheet.getRow(1).eachCell(cell => {
-          cell.style = headerStyle;
+      serviceSheet.getRow(1).eachCell(cell => {
+        cell.style = headerStyle;
+      });
+
+      // إضافة الفلتر التلقائي لورقة التخصصات
+      serviceSheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: serviceSheet.columnCount }
+      };
+
+      // إحصائيات العيادات والمراكز
+      const locationSheet = workbook.addWorksheet('إحصائيات العيادات والمراكز');
+      locationSheet.columns = [
+        { header: 'المكان', key: 'location', width: 35 },
+        { header: 'العدد', key: 'count', width: 15 },
+        { header: 'النسبة المئوية', key: 'percentage', width: 15 }
+      ];
+
+      const locationStats = Object.entries(statistics.appointmentsByLocation || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([location, count]) => ({
+          location,
+          count,
+          percentage: `${((count / statistics.totalAppointments) * 100).toFixed(1)}%`
+        }));
+
+      locationStats.forEach((stat, index) => {
+        const row = locationSheet.addRow(stat);
+        row.eachCell(cell => {
+          cell.style = index % 2 === 0 ? cellStyle : alternateCellStyle;
         });
+      });
+
+      // تطبيق التنسيق على العناوين
+      locationSheet.getRow(1).eachCell(cell => {
+        cell.style = headerStyle;
+      });
+
+      // إضافة الفلتر التلقائي لورقة العيادات والمراكز
+      locationSheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: locationSheet.columnCount }
+      };
+
+      // تجميد الصف الأول في جميع الأوراق
+      [generalSheet, provinceSheet, serviceSheet, locationSheet].forEach(sheet => {
+        sheet.views = [
+          { state: 'frozen', xSplit: 0, ySplit: 1 }
+        ];
       });
     }
 

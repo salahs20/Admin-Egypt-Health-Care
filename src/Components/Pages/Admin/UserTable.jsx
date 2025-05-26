@@ -58,6 +58,10 @@ const UserTable = () => {
     phone: '',
     email: ''
   });
+  const [clinics, setClinics] = useState([]);
+  const [centers, setCenters] = useState([]);
+  const [services, setServices] = useState([]);
+  const [advice, setAdvice] = useState([]);
   const editRef = useRef(null);
 
   const handleError = (error, message) => {
@@ -475,6 +479,38 @@ const UserTable = () => {
     { name: "date", label: "التاريخ", type: "date" },
   ];
 
+  useEffect(() => {
+    const fetchClinicsAndCenters = async () => {
+      try {
+        const clinicsSnapshot = await getDocs(collection(db, "Clinics"));
+        setClinics(clinicsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+
+        const centersSnapshot = await getDocs(collection(db, "Centers"));
+        setCenters(centersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        console.error("Error fetching clinics and centers:", error);
+      }
+    };
+
+    fetchClinicsAndCenters();
+  }, []);
+
+  useEffect(() => {
+    const fetchServicesAndAdvice = async () => {
+      try {
+        const servicesSnapshot = await getDocs(collection(db, "services"));
+        setServices(servicesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+
+        const adviceSnapshot = await getDocs(collection(db, "tips"));
+        setAdvice(adviceSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        console.error("Error fetching services and advice:", error);
+      }
+    };
+
+    fetchServicesAndAdvice();
+  }, []);
+
   return (
     <div className="pb-8 sm:px-6 lg:px-8">
       <div className="pe-[5rem] mx-auto bg-white p-6 shadow-lg">
@@ -865,6 +901,10 @@ const UserTable = () => {
                   statistics={{
                     totalAppointments: appointments.length,
                     totalUsers: users.length,
+                    totalDoctors: [...new Set(appointments.map(app => app.doctor))].length,
+                    totalSpecialties: services.length,
+                    totalClinics: clinics.length,
+                    totalCenters: centers.length,
                     bookedAppointments: appointments.filter(app => app.dataSent).length,
                     availableSlots: appointments.filter(app => !app.dataSent).length,
                     dataSent: appointments.filter(app => app.dataSent).length,
@@ -876,9 +916,59 @@ const UserTable = () => {
                     appointmentsByService: appointments.reduce((acc, app) => {
                       acc[app.service] = (acc[app.service] || 0) + 1;
                       return acc;
+                    }, {}),
+                    appointmentsByDoctor: appointments.reduce((acc, app) => {
+                      if (app.doctor) {
+                        acc[app.doctor] = (acc[app.doctor] || 0) + 1;
+                      }
+                      return acc;
+                    }, {}),
+                    appointmentsByLocation: appointments.reduce((acc, app) => {
+                      const location = `${app.type} ${app.clinicOrCenter}`;
+                      acc[location] = (acc[location] || 0) + 1;
+                      return acc;
                     }, {})
                   }}
                 />
+              </div>
+
+              {/* إحصائيات العيادات والمراكز */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4">إحصائيات العيادات والمراكز:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-100 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">عدد العيادات</p>
+                    <p className="text-2xl mt-2">{clinics.length}</p>
+                    {/* <p className="text-sm mt-2 text-gray-600">العيادات النشطة: {clinics.filter(c => c.isActive).length}</p> */}
+                  </div>
+                  <div className="bg-green-100 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">عدد المراكز</p>
+                    <p className="text-2xl mt-2">{centers.length}</p>
+                    {/* <p className="text-sm mt-2 text-gray-600">المراكز النشطة: {centers.filter(c => c.isActive).length}</p> */}
+                  </div>
+                  <div className="bg-purple-100 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">إجمالي المنشآت</p>
+                    <p className="text-2xl mt-2">{clinics.length + centers.length}</p>
+                    {/* <p className="text-sm mt-2 text-gray-600">المنشآت النشطة: {clinics.filter(c => c.isActive).length + centers.filter(c => c.isActive).length}</p> */}
+                  </div>
+                </div>
+              </div>
+
+              {/* إحصائيات التخصصات */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4">إحصائيات التخصصات:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-yellow-100 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">عدد التخصصات</p>
+                    <p className="text-2xl mt-2">{services.length}</p>
+                    {/* <p className="text-sm mt-2 text-gray-600">التخصصات النشطة: {services.filter(s => s.isActive).length}</p> */}
+                  </div>
+                  <div className="bg-red-100 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">عدد النصائح الطبية</p>
+                    <p className="text-2xl mt-2">{advice.length}</p>
+                     {/* <p className="text-sm mt-2 text-gray-600">النصائح النشطة: {advice.filter(a => a.isActive).length}</p> */}
+                  </div>
+                </div>
               </div>
               
               {/* إجمالي المواعيد */}
