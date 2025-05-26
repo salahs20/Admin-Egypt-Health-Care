@@ -214,6 +214,7 @@ const UserTable = () => {
       `تفاصيل الموعد الخاص بك:\n` +
       `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
       `- المحافظة: ${appointment.province}\n` +
+      `- العنوان: ${appointment.address}\n` +
       `- التخصص: ${appointment.service}\n` +
       `- الموعد: ${appointment.appointment}\n` +
       `- الرسالة: ${appointment.message}\n\n` +
@@ -245,6 +246,7 @@ const UserTable = () => {
       `تفاصيل الموعد الخاص بك:\n` +
       `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
       `- المحافظة: ${appointment.province}\n` +
+      `- العنوان: ${appointment.address}\n` +
       `- التخصص: ${appointment.service}\n` +
       `- الموعد: ${appointment.appointment}\n` +
       `- الرسالة: ${appointment.message}\n\n` +
@@ -508,9 +510,20 @@ const UserTable = () => {
                         <td className="py-3 px-4  text-black">
                           {appointment.service}
                         </td>
-                        <td className="py-3 px-4  text-black">
-                          {appointment.appointment}
+                        <td className="py-3 px-4 text-black">
+                          {new Date(appointment.appointment)
+                            .toLocaleString("ar-EG", {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })
+                            .replace("،", " - ")}
                         </td>
+
                         <td className="py-3 px-4  text-black">
                           {appointment.message}
                         </td>

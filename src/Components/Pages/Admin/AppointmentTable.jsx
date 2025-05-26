@@ -493,7 +493,7 @@ const AppointmentTable = () => {
           <option key={doctor} value={doctor}>{doctor}</option>
         ))}
       </select>
-      <select
+      {/* <select
         className="border border-gray-300 py-2 px-4 rounded"
         value={filters.status}
         onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -501,7 +501,7 @@ const AppointmentTable = () => {
         <option value="all">كل الحالات</option>
         <option value="available">متاح</option>
         <option value="booked">محجوز</option>
-      </select>
+      </select> */}
     </div>
   );
 
@@ -650,7 +650,7 @@ const AppointmentTable = () => {
                     <th className="py-3 px-4 text-center border-b border-gray-300">التخصص</th>
                     <th className="py-3 px-4 text-center border-b border-gray-300">الطبيب</th>
                     <th className="py-3 px-4 text-center border-b border-gray-300">التاريخ والوقت</th>
-                    <th className="py-3 px-4 text-center border-b border-gray-300">الحالة</th>
+                    {/* <th className="py-3 px-4 text-center border-b border-gray-300">الحالة</th> */}
                     <th className="py-3 px-4 text-center border-b border-gray-300">الإجراءات</th>
                   </tr>
                 </thead>
@@ -673,7 +673,7 @@ const AppointmentTable = () => {
                         <td className="py-3 px-4 text-center text-gray-800" dir="ltr">
                           {formatDate(specialty.date)}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        {/* <td className="py-3 px-4 text-center">
                           <span
                             className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                               specialty.status === 'available'
@@ -683,7 +683,7 @@ const AppointmentTable = () => {
                           >
                             {specialty.status === 'available' ? 'متاح' : 'محجوز'}
                           </span>
-                        </td>
+                        </td> */}
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -792,8 +792,8 @@ const AppointmentTable = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">التاريخ</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">الحالة</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">الإجراءات</th>
+                          {/* <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">الحالة</th> */}
+                          {/* <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">الإجراءات</th> */}
                         </tr>
                       </thead>
                       <tbody>
@@ -802,7 +802,7 @@ const AppointmentTable = () => {
                             <td className="px-6 py-4 text-right text-black">
                               {formatDate(specialty.date)}
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            {/* <td className="px-6 py-4 text-right">
                               <span className={`px-2 py-1 rounded-full text-xs ${
                                 specialty.status === 'available' 
                                   ? 'bg-green-100 text-green-800' 
@@ -810,15 +810,15 @@ const AppointmentTable = () => {
                               }`}>
                                 {specialty.status === 'available' ? 'متاح' : 'محجوز'}
                               </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
+                            </td> */}
+                            {/* <td className="px-6 py-4 text-right">
                               <button
                                 onClick={() => handleEditClick(specialty)}
                                 className="text-yellow-600 hover:text-yellow-900"
                               >
                                 تعديل
                               </button>
-                            </td>
+                            </td> */}
                           </tr>
                         ))}
                       </tbody>
