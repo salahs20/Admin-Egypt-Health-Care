@@ -14,7 +14,23 @@ import './Modal.css';
 
 const formatDate = (date) => {
   try {
-    return new Date(date).toLocaleString('en-US', {
+    const dateObj = new Date(date);
+    const months = {
+      'Jan': 'يناير',
+      'Feb': 'فبراير',
+      'Mar': 'مارس',
+      'Apr': 'أبريل',
+      'May': 'مايو',
+      'Jun': 'يونيو',
+      'Jul': 'يوليو',
+      'Aug': 'أغسطس',
+      'Sep': 'سبتمبر',
+      'Oct': 'أكتوبر',
+      'Nov': 'نوفمبر',
+      'Dec': 'ديسمبر'
+    };
+
+    const formattedDate = dateObj.toLocaleString('ar', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -22,6 +38,14 @@ const formatDate = (date) => {
       minute: '2-digit',
       hour12: true
     });
+
+    // تحويل أسماء الشهور إلى العربية
+    let arabicDate = formattedDate;
+    Object.entries(months).forEach(([eng, ar]) => {
+      arabicDate = arabicDate.replace(eng, ar);
+    });
+
+    return arabicDate;
   } catch (error) {
     console.error("Error formatting date:", error);
     return "Invalid date";
@@ -35,15 +59,6 @@ const TableRow = React.memo(({ specialty, index, onEdit, onDelete }) => (
     <td className="py-3 px-4 text-center">{specialty.doctor}</td>
     <td className="py-3 px-4 text-center" dir="ltr">
       {formatDate(specialty.date)}
-    </td>
-    <td className="py-3 px-4 text-center">
-      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-        specialty.status === 'available' 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-yellow-100 text-yellow-800'
-      }`}>
-        {specialty.status === 'available' ? 'متاح' : 'محجوز'}
-      </span>
     </td>
     <td className="py-3 px-4">
       <div className="flex items-center justify-center gap-2">
@@ -99,8 +114,8 @@ const AppointmentTable = () => {
   };
 
   const handleEditClick = (appointment) => {
-    setEditing(true);
-    setEditedData(appointment);
+    setEditingAppointment(appointment);
+    setIsEditModalOpen(true);
   };
 
   const [editing, setEditing] = useState(false);
@@ -143,6 +158,8 @@ const AppointmentTable = () => {
     doctorStats: {},
     specialtyDistribution: {}
   });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState(null);
 
   const handleEditAppointmentClick = (appointment) => {
     setEditAppointmentId(appointment.id);
@@ -339,7 +356,6 @@ const AppointmentTable = () => {
       const appointmentData = {
         ...formData,
         clinicOrCenterId: selectedClinicOrCenter,
-        status: 'available',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -547,6 +563,39 @@ const AppointmentTable = () => {
     return Object.keys(errors).length === 0 ? null : errors;
   };
 
+  const handleEditSubmit = async () => {
+    try {
+      if (!editingAppointment.service || !editingAppointment.doctor || !editingAppointment.date) {
+        setErrorMessage("يرجى إدخال جميع الحقول المطلوبة");
+        return;
+      }
+
+      const appointmentRef = doc(db, "Specialties", editingAppointment.id);
+      await updateDoc(appointmentRef, {
+        service: editingAppointment.service,
+        doctor: editingAppointment.doctor,
+        date: editingAppointment.date,
+        updatedAt: new Date().toISOString()
+      });
+
+      setSpecialties(prev => prev.map(app => 
+        app.id === editingAppointment.id ? editingAppointment : app
+      ));
+
+      setIsEditModalOpen(false);
+      setEditingAppointment(null);
+      showNotification("تم تحديث الموعد بنجاح", "success");
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      setErrorMessage("حدث خطأ أثناء تحديث الموعد");
+    }
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalOpen(false);
+    setEditingAppointment(null);
+  };
+
   return (
     <div className="pb-8 px-4 pe-[5rem]">
       <div className="mx-auto bg-white p-8 rounded-lg shadow-lg">
@@ -614,6 +663,9 @@ const AppointmentTable = () => {
                       date: e.target.value,
                     })
                   }
+                  min={new Date().toISOString().slice(0, 16)}
+                  placeholder="اختر التاريخ والوقت"
+                  required
                 />
               </div>
 
@@ -650,14 +702,13 @@ const AppointmentTable = () => {
                     <th className="py-3 px-4 text-center border-b border-gray-300">التخصص</th>
                     <th className="py-3 px-4 text-center border-b border-gray-300">الطبيب</th>
                     <th className="py-3 px-4 text-center border-b border-gray-300">التاريخ والوقت</th>
-                    {/* <th className="py-3 px-4 text-center border-b border-gray-300">الحالة</th> */}
                     <th className="py-3 px-4 text-center border-b border-gray-300">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSpecialties.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-4 text-center text-gray-500 font-medium">
+                      <td colSpan="5" className="py-4 text-center text-gray-500 font-medium">
                         لا توجد مواعيد متاحة
                       </td>
                     </tr>
@@ -673,21 +724,10 @@ const AppointmentTable = () => {
                         <td className="py-3 px-4 text-center text-gray-800" dir="ltr">
                           {formatDate(specialty.date)}
                         </td>
-                        {/* <td className="py-3 px-4 text-center">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                              specialty.status === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {specialty.status === 'available' ? 'متاح' : 'محجوز'}
-                          </span>
-                        </td> */}
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleEditSpecialtyClick(specialty)}
+                              onClick={() => handleEditClick(specialty)}
                               className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition-colors"
                               title="تعديل"
                             >
@@ -864,6 +904,85 @@ const AppointmentTable = () => {
                 className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
               >
                 إغلاق
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={isEditModalOpen}
+          onRequestClose={handleEditCancel}
+          contentLabel="تعديل الموعد"
+          className="modal-content"
+          overlayClassName="modal-overlay"
+        >
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">تعديل الموعد</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-700 mb-2">التخصص</label>
+                <input
+                  type="text"
+                  className="border border-gray-300 py-2 px-4 rounded w-full"
+                  value={editingAppointment?.service || ''}
+                  onChange={(e) => setEditingAppointment(prev => ({
+                    ...prev,
+                    service: e.target.value
+                  }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">الطبيب</label>
+                <input
+                  type="text"
+                  className="border border-gray-300 py-2 px-4 rounded w-full"
+                  value={editingAppointment?.doctor || ''}
+                  onChange={(e) => setEditingAppointment(prev => ({
+                    ...prev,
+                    doctor: e.target.value
+                  }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">التاريخ والوقت</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="datetime-local"
+                    className="border border-gray-300 py-2 px-4 rounded w-full"
+                    value={editingAppointment?.date ? new Date(editingAppointment.date).toISOString().slice(0, 16) : ''}
+                    onChange={(e) => setEditingAppointment(prev => ({
+                      ...prev,
+                      date: e.target.value
+                    }))}
+                  />
+                  <div className="text-gray-600 text-sm">
+                    {editingAppointment?.date ? formatDate(editingAppointment.date) : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {errorMessage}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end gap-4">
+              <button
+                onClick={handleEditCancel}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleEditSubmit}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                حفظ التغييرات
               </button>
             </div>
           </div>

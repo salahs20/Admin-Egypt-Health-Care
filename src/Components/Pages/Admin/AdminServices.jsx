@@ -815,7 +815,7 @@ const AdminServices = () => {
                   {activeTab === 'services' ? 'الوصف' : 'المحتوى'}
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-medium text-gray-500">التصنيف</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-gray-500">الحالة</th>
+                {/* <th className="px-6 py-4 text-right text-sm font-medium text-gray-500">الحالة</th> */}
                 <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">الإجراءات</th>
               </tr>
             </thead>
@@ -827,7 +827,7 @@ const AdminServices = () => {
                   <td className="px-6 py-4">
                     {renderTableCell(categories.find(c => c.id === item.category)?.name)}
                   </td>
-                  <td className="px-6 py-4">
+                  {/* <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       item.isActive 
                         ? 'bg-green-100 text-green-800' 
@@ -835,7 +835,7 @@ const AdminServices = () => {
                     }`}>
                       {item.isActive ? 'نشط' : 'غير نشط'}
                     </span>
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button

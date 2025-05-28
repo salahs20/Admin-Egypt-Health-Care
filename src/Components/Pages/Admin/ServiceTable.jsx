@@ -43,6 +43,117 @@ const TableRow = ({ clinic, center, index, onEdit, onDelete }) => (
   </tr>
 );
 
+// مكون النافذة المنبثقة
+const EditModal = ({ isOpen, onClose, editData, setEditData, onSave }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 w-full max-w-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold text-gray-800">تعديل الموقع</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              اسم العيادة
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              placeholder="تعديل اسم العيادة"
+              value={editData.clinic}
+              onChange={(e) =>
+                setEditData({ ...editData, clinic: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              عنوان العيادة
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              placeholder="تعديل عنوان العيادة"
+              value={editData.clinicAddress || ""}
+              onChange={(e) =>
+                setEditData({
+                  ...editData,
+                  clinicAddress: e.target.value,
+                })
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              اسم المركز
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              placeholder="تعديل اسم المركز"
+              value={editData.center}
+              onChange={(e) =>
+                setEditData({ ...editData, center: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              عنوان المركز
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              placeholder="تعديل عنوان المركز"
+              value={editData.centerAddress || ""}
+              onChange={(e) =>
+                setEditData({
+                  ...editData,
+                  centerAddress: e.target.value,
+                })
+              }
+            />
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-4">
+          <button
+            onClick={onClose}
+            className="bg-gray-500 hover:bg-gray-600 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={onSave}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
+          >
+            حفظ التعديلات
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ServiceTable = () => {
   const [provinces, setProvinces] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -53,6 +164,7 @@ const ServiceTable = () => {
     center: "",
   });
   const [editData, setEditData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProvince, setNewProvince] = useState("");
 
   useEffect(() => {
@@ -213,6 +325,7 @@ const ServiceTable = () => {
       );
 
       setEditData(null);
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error updating document: ", error);
     }
@@ -318,84 +431,6 @@ const ServiceTable = () => {
               إضافة موقع جديد
             </button>
           </div>
-
-          {editData && (
-            <div className="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                تعديل الموقع
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    اسم العيادة
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="تعديل اسم العيادة"
-                    value={editData.clinic}
-                    onChange={(e) =>
-                      setEditData({ ...editData, clinic: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    عنوان العيادة
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="تعديل عنوان العيادة"
-                    value={editData.clinicAddress || ""}
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        clinicAddress: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    اسم المركز
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="تعديل اسم المركز"
-                    value={editData.center}
-                    onChange={(e) =>
-                      setEditData({ ...editData, center: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    عنوان المركز
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="تعديل عنوان المركز"
-                    value={editData.centerAddress || ""}
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        centerAddress: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleEditLocation}
-                className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg transition-colors duration-200 shadow-sm font-medium"
-              >
-                حفظ التعديلات
-              </button>
-            </div>
-          )}
         </div>
 
         {provinces.map((province) => (
@@ -451,7 +486,7 @@ const ServiceTable = () => {
                           clinic={clinic}
                           center={center}
                           index={index}
-                          onEdit={(clinic, center) =>
+                          onEdit={(clinic, center) => {
                             setEditData({
                               clinicId: clinic.id,
                               clinic: clinic.name,
@@ -459,8 +494,9 @@ const ServiceTable = () => {
                               centerId: center?.id,
                               center: center?.name || "",
                               centerAddress: center?.address || "",
-                            })
-                          }
+                            });
+                            setIsModalOpen(true);
+                          }}
                           onDelete={handleDeleteClinic}
                         />
                       );
@@ -471,6 +507,17 @@ const ServiceTable = () => {
           </div>
         ))}
       </div>
+
+      <EditModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditData(null);
+        }}
+        editData={editData}
+        setEditData={setEditData}
+        onSave={handleEditLocation}
+      />
     </>
   );
 };

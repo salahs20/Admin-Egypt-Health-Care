@@ -307,19 +307,80 @@ const UserTable = () => {
     const message =
       `مرحبًا ${appointment.name}،\n\n` +
       `تفاصيل الموعد الخاص بك:\n` +
+      `- الاسم: ${appointment.name}\n` +
+      `- رقم الهاتف: ${appointment.phone}\n` +
+      `- البريد الإلكتروني: ${appointment.email}\n` +
       `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
       `- المحافظة: ${appointment.province}\n` +
-      `- العنوان: ${appointment.address}\n` +
+      `- العنوان: ${appointment.address || 'غير محدد'}\n` +
       `- التخصص: ${appointment.service}\n` +
-      `- الموعد: ${appointment.appointment}\n` +
-      `- الرسالة: ${appointment.message}\n\n` +
-      `شكرًا لتواصلك معنا!` +
+      `- الموعد: ${new Date(appointment.appointment).toLocaleString("ar-EG", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).replace("،", " - ")}\n` +
+      `- الرسالة: ${appointment.message || 'لا توجد رسالة'}\n` +
+      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString('ar-EG', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })}\n` +
+      `- التعليقات: ${appointment.comments || 'لا توجد تعليقات'}\n\n` +
+      `شكرًا لتواصلك معنا!\n` +
       `Egypt Health Care`;
 
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
       message
     )}`;
     window.open(whatsappURL, "_blank");
+  };
+
+  const handleSendEmail = (appointment) => {
+    const email = appointment.email;
+    const subject = "تفاصيل الموعد الخاص بك - Egypt Health Care";
+    const body =
+      `مرحبًا ${appointment.name}،\n\n` +
+      `تفاصيل الموعد الخاص بك:\n` +
+      `- الاسم: ${appointment.name}\n` +
+      `- رقم الهاتف: ${appointment.phone}\n` +
+      `- البريد الإلكتروني: ${appointment.email}\n` +
+      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
+      `- المحافظة: ${appointment.province}\n` +
+      `- العنوان: ${appointment.address || 'غير محدد'}\n` +
+      `- التخصص: ${appointment.service}\n` +
+      `- الموعد: ${new Date(appointment.appointment).toLocaleString("ar-EG", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).replace("،", " - ")}\n` +
+      `- الرسالة: ${appointment.message || 'لا توجد رسالة'}\n` +
+      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString('ar-EG', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })}\n` +
+      `- التعليقات: ${appointment.comments || 'لا توجد تعليقات'}\n\n` +
+      `شكرًا لتواصلك معنا!\n` +
+      `Egypt Health Care`;
+
+    const mailtoURL = `mailto:${email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoURL, "_blank");
   };
 
   const handleWhatsAppClick = (appointment) => {
@@ -331,27 +392,6 @@ const UserTable = () => {
       message
     )}`;
     window.open(whatsappURL, "_blank");
-  };
-
-  const handleSendEmail = (appointment) => {
-    const email = appointment.email;
-    const subject = "تفاصيل الموعد الخاص بك";
-    const body =
-      `مرحبًا ${appointment.name}،\n\n` +
-      `تفاصيل الموعد الخاص بك:\n` +
-      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
-      `- المحافظة: ${appointment.province}\n` +
-      `- العنوان: ${appointment.address}\n` +
-      `- التخصص: ${appointment.service}\n` +
-      `- الموعد: ${appointment.appointment}\n` +
-      `- الرسالة: ${appointment.message}\n\n` +
-      `شكرًا لتواصلك معنا!` +
-      `Egypt Health Care`;
-
-    const mailtoURL = `mailto:${email}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoURL, "_blank");
   };
 
   const handleChangeColor = (userId, color) => {

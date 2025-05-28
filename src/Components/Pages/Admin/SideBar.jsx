@@ -23,7 +23,7 @@ const SideBar = () => {
     { path: "/aservice", icon: <MdOutlineMedicalServices className="text-xl" />, label: "الخدمات" },
     { path: "/appointment", icon: <CgCalendarDates className="text-xl" />, label: "ادارة المواعيد" },
     { path: "/user", icon: <LuUsersRound className="text-xl" />, label: "اداره المستخدمين" },
-    { path: "/settings", icon: <MdSettings className="text-xl" />, label: "الإعدادات" },
+    // { path: "/settings", icon: <MdSettings className="text-xl" />, label: "الإعدادات" },
   ];
 
   return (
@@ -78,16 +78,7 @@ const SideBar = () => {
 
         {/* Sidebar Footer */}
         <div className="absolute bottom-0 w-full p-4 border-t border-blue-700">
-          <button
-            className="flex items-center w-full p-3 rounded-lg text-blue-100 hover:bg-blue-700/50 transition-colors duration-200"
-            onClick={() => {
-              // Add logout logic here
-              console.log("Logout clicked");
-            }}
-          >
-            <BiLogOut className={`text-xl ${isOpen ? 'ml-3' : 'mx-auto'}`} />
-            {isOpen && <span className="font-medium truncate">تسجيل الخروج</span>}
-          </button>
+          
         </div>
       </div>
 
