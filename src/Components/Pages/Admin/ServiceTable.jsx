@@ -17,20 +17,24 @@ const TableRow = ({ clinic, center, index, onEdit, onDelete }) => (
   <tr className="border-b hover:bg-gray-50 transition-colors duration-200">
     <td className="py-4 px-6">{index + 1}</td>
     <td className="py-4 px-6 font-medium">{clinic.name}</td>
-    <td className="py-4 px-6 text-gray-600">{clinic.address || "بدون عنوان"}</td>
+    <td className="py-4 px-6 text-gray-600">
+      {clinic.address || "بدون عنوان"}
+    </td>
     <td className="py-4 px-6 font-medium">{center?.name || "غير معروف"}</td>
-    <td className="py-4 px-6 text-gray-600">{center?.address || "بدون عنوان"}</td>
+    <td className="py-4 px-6 text-gray-600">
+      {center?.address || "بدون عنوان"}
+    </td>
     <td className="py-4 px-6">
-      <button 
-        onClick={() => onEdit(clinic, center)} 
+      <button
+        onClick={() => onEdit(clinic, center)}
         className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm"
       >
         تعديل
       </button>
     </td>
     <td className="py-4 px-6">
-      <button 
-        onClick={() => onDelete(clinic.id)} 
+      <button
+        onClick={() => onDelete(clinic.id)}
         className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm"
       >
         حذف
@@ -227,11 +231,11 @@ const ServiceTable = () => {
   return (
     <>
       <div className="pb-8 px-4 pe-[5rem] max-w-7xl mx-auto">
-        <div className="bg-white p-8 rounded-xl shadow-lg mt-8">
+        <div className="bg-white p-8 rounded-xl shadow-lg ">
           <h2 className="text-3xl font-bold text-blue-800 mb-8 text-center">
             إدارة المحافظات والعيادات والمراكز
           </h2>
-          
+
           <div className="space-y-6">
             <div className="flex gap-4 items-end">
               <div className="flex-1">
@@ -263,7 +267,10 @@ const ServiceTable = () => {
                   className="w-full border border-gray-300 py-2.5 px-4 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   value={locationData.province}
                   onChange={(e) =>
-                    setLocationData({ ...locationData, province: e.target.value })
+                    setLocationData({
+                      ...locationData,
+                      province: e.target.value,
+                    })
                   }
                 >
                   <option value="">اختر المحافظة</option>
@@ -314,7 +321,9 @@ const ServiceTable = () => {
 
           {editData && (
             <div className="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">تعديل الموقع</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                تعديل الموقع
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-2">
@@ -340,7 +349,10 @@ const ServiceTable = () => {
                     placeholder="تعديل عنوان العيادة"
                     value={editData.clinicAddress || ""}
                     onChange={(e) =>
-                      setEditData({ ...editData, clinicAddress: e.target.value })
+                      setEditData({
+                        ...editData,
+                        clinicAddress: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -368,7 +380,10 @@ const ServiceTable = () => {
                     placeholder="تعديل عنوان المركز"
                     value={editData.centerAddress || ""}
                     onChange={(e) =>
-                      setEditData({ ...editData, centerAddress: e.target.value })
+                      setEditData({
+                        ...editData,
+                        centerAddress: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -384,9 +399,14 @@ const ServiceTable = () => {
         </div>
 
         {provinces.map((province) => (
-          <div key={province.id} className="bg-white p-8 rounded-xl shadow-lg mt-8">
+          <div
+            key={province.id}
+            className="bg-white p-8 rounded-xl shadow-lg mt-8"
+          >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-blue-800">{province.name}</h2>
+              <h2 className="text-2xl font-bold text-blue-800">
+                {province.name}
+              </h2>
               <button
                 onClick={() => handleDeleteProvince(province.id)}
                 className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm font-medium"
@@ -400,11 +420,21 @@ const ServiceTable = () => {
                 <thead>
                   <tr className="bg-gray-50 text-gray-700">
                     <th className="py-4 px-6 text-right font-semibold">#</th>
-                    <th className="py-4 px-6 text-right font-semibold">اسم العيادة</th>
-                    <th className="py-4 px-6 text-right font-semibold">عنوان العيادة</th>
-                    <th className="py-4 px-6 text-right font-semibold">اسم المركز</th>
-                    <th className="py-4 px-6 text-right font-semibold">عنوان المركز</th>
-                    <th className="py-4 px-6 text-right font-semibold">تعديل</th>
+                    <th className="py-4 px-6 text-right font-semibold">
+                      اسم العيادة
+                    </th>
+                    <th className="py-4 px-6 text-right font-semibold">
+                      عنوان العيادة
+                    </th>
+                    <th className="py-4 px-6 text-right font-semibold">
+                      اسم المركز
+                    </th>
+                    <th className="py-4 px-6 text-right font-semibold">
+                      عنوان المركز
+                    </th>
+                    <th className="py-4 px-6 text-right font-semibold">
+                      تعديل
+                    </th>
                     <th className="py-4 px-6 text-right font-semibold">حذف</th>
                   </tr>
                 </thead>
@@ -421,14 +451,16 @@ const ServiceTable = () => {
                           clinic={clinic}
                           center={center}
                           index={index}
-                          onEdit={(clinic, center) => setEditData({
-                            clinicId: clinic.id,
-                            clinic: clinic.name,
-                            clinicAddress: clinic.address || "",
-                            centerId: center?.id,
-                            center: center?.name || "",
-                            centerAddress: center?.address || ""
-                          })}
+                          onEdit={(clinic, center) =>
+                            setEditData({
+                              clinicId: clinic.id,
+                              clinic: clinic.name,
+                              clinicAddress: clinic.address || "",
+                              centerId: center?.id,
+                              center: center?.name || "",
+                              centerAddress: center?.address || "",
+                            })
+                          }
                           onDelete={handleDeleteClinic}
                         />
                       );

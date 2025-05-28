@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { BiLogOut } from "react-icons/bi";
 import { CgCalendarDates } from "react-icons/cg";
 import { LuUsersRound } from "react-icons/lu";
@@ -8,35 +8,10 @@ import { FaBars, FaTimes } from "react-icons/fa";
 
 const SideBar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial check
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleItemClick = () => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
   };
 
   const isActive = (path) => {
@@ -53,23 +28,15 @@ const SideBar = () => {
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isOpen && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
-          onClick={toggleSidebar}
-        />
-      )}
-
       {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 h-full bg-gradient-to-b from-blue-900 to-blue-800 text-white transition-all duration-300 ease-in-out z-50 shadow-xl
-          ${isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-20 md:translate-x-0'}`}
+          ${isOpen ? 'w-64' : 'w-16'}`}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-blue-700">
           {isOpen && (
-            <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-white truncate">Admin Panel</h1>
           )}
           <button
             onClick={toggleSidebar}
@@ -87,7 +54,6 @@ const SideBar = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  onClick={handleItemClick}
                   className={`flex items-center p-3 rounded-lg transition-all duration-200 group
                     ${isActive(item.path) 
                       ? 'bg-blue-700 text-white shadow-md' 
@@ -97,7 +63,7 @@ const SideBar = () => {
                     {item.icon}
                   </div>
                   {isOpen && (
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium truncate">{item.label}</span>
                   )}
                   {!isOpen && (
                     <div className="absolute right-0 mr-2 bg-blue-900 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
@@ -120,13 +86,13 @@ const SideBar = () => {
             }}
           >
             <BiLogOut className={`text-xl ${isOpen ? 'ml-3' : 'mx-auto'}`} />
-            {isOpen && <span className="font-medium">تسجيل الخروج</span>}
+            {isOpen && <span className="font-medium truncate">تسجيل الخروج</span>}
           </button>
         </div>
       </div>
 
       {/* Main Content Wrapper */}
-      <div className={`transition-all duration-300 ${isOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      <div className={`transition-all duration-300 ${isOpen ? 'ml-64' : 'ml-16'}`}>
         {/* Your main content goes here */}
       </div>
     </>

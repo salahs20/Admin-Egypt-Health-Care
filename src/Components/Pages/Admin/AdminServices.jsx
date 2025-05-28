@@ -485,7 +485,7 @@ const AdminServices = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8 px-4 md:pl-24  pt-6">
+    <div className="min-h-screen bg-gray-50 pb-8 px-4 md:pl-24 pt-6" dir="rtl">
       {(error || success) && (
         <div className={`fixed top-4 right-4 z-50 max-w-md ${
           error ? 'bg-red-100 border-red-500' : 'bg-green-100 border-green-500'
