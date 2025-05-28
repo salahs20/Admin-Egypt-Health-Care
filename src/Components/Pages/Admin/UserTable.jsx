@@ -25,12 +25,13 @@ const ERROR_MESSAGES = {
   addAppointment: "حدث خطأ أثناء إضافة الموعد.",
 };
 
-const TextInput = ({ placeholder, value, onChange }) => (
+const TextInput = ({ placeholder, value, onChange, name }) => (
   <input
     type="text"
     className="border border-gray-300 py-2 px-4 rounded w-full"
     placeholder={placeholder}
-    value={value}
+    value={value || ''}
+    name={name}
     onChange={onChange}
   />
 );
@@ -191,35 +192,65 @@ const UserTable = () => {
   };
 
   const handleSaveAppointment = async () => {
-    if (editingAppointment) {
-      try {
-        const appointmentRef = doc(db, "Appointments", editingAppointment.id);
-        await updateDoc(appointmentRef, editingAppointment);
-        setAppointments(
-          appointments.map((appointment) =>
-            appointment.id === editingAppointment.id
-              ? editingAppointment
-              : appointment
-          )
-        );
-        setFilteredAppointments(
-          filteredAppointments.map((appointment) =>
-            appointment.id === editingAppointment.id
-              ? editingAppointment
-              : appointment
-          )
-        );
-        handleCloseEditModal();
-        toast.success("تم تحديث الموعد بنجاح");
-      } catch (error) {
-        handleError(error, ERROR_MESSAGES.updateAppointment);
+    if (!editingAppointment) return;
+
+    try {
+      // التحقق من البيانات المطلوبة
+      if (!editingAppointment.name || !editingAppointment.phone || !editingAppointment.email) {
+        toast.error("يرجى ملء جميع الحقول المطلوبة");
+        return;
       }
+
+      // إنشاء نسخة من البيانات المطلوبة فقط
+      const appointmentData = {
+        name: editingAppointment.name,
+        phone: editingAppointment.phone,
+        email: editingAppointment.email,
+        clinicOrCenter: editingAppointment.clinicOrCenter || '',
+        province: editingAppointment.province || '',
+        service: editingAppointment.service || '',
+        appointment: editingAppointment.appointment || '',
+        message: editingAppointment.message || '',
+        type: editingAppointment.type || '',
+        dataSent: editingAppointment.dataSent || false,
+        comments: editingAppointment.comments || '',
+        registrationDate: editingAppointment.registrationDate || new Date().toISOString()
+      };
+
+      const appointmentRef = doc(db, "Appointments", editingAppointment.id);
+      await updateDoc(appointmentRef, appointmentData);
+
+      // تحديث البيانات في الواجهة
+      setAppointments(prevAppointments => 
+        prevAppointments.map(appointment =>
+          appointment.id === editingAppointment.id
+            ? { ...appointment, ...appointmentData }
+            : appointment
+        )
+      );
+
+      setFilteredAppointments(prevFiltered => 
+        prevFiltered.map(appointment =>
+          appointment.id === editingAppointment.id
+            ? { ...appointment, ...appointmentData }
+            : appointment
+        )
+      );
+      
+      handleCloseEditModal();
+      toast.success("تم تحديث الموعد بنجاح");
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      toast.error("حدث خطأ أثناء تحديث الموعد");
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEditingAppointment({ ...editingAppointment, [name]: value });
+    setEditingAppointment(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddUser = async () => {
