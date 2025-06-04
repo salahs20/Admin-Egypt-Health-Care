@@ -30,7 +30,7 @@ const TextInput = ({ placeholder, value, onChange, name }) => (
     type="text"
     className="border border-gray-300 py-2 px-4 rounded w-full"
     placeholder={placeholder}
-    value={value || ''}
+    value={value || ""}
     name={name}
     onChange={onChange}
   />
@@ -51,13 +51,13 @@ const UserTable = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [commentText, setCommentText] = useState("");
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState("name");
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
-    name: '',
-    phone: '',
-    email: ''
+    name: "",
+    phone: "",
+    email: "",
   });
   const [clinics, setClinics] = useState([]);
   const [centers, setCenters] = useState([]);
@@ -73,18 +73,24 @@ const UserTable = () => {
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchFilters(prev => ({
+    setSearchFilters((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   useEffect(() => {
-    const filtered = appointments.filter(appointment => {
-      const nameMatch = appointment.name.toLowerCase().includes(searchFilters.name.toLowerCase());
-      const phoneMatch = appointment.phone.toLowerCase().includes(searchFilters.phone.toLowerCase());
-      const emailMatch = appointment.email.toLowerCase().includes(searchFilters.email.toLowerCase());
-      
+    const filtered = appointments.filter((appointment) => {
+      const nameMatch = appointment.name
+        .toLowerCase()
+        .includes(searchFilters.name.toLowerCase());
+      const phoneMatch = appointment.phone
+        .toLowerCase()
+        .includes(searchFilters.phone.toLowerCase());
+      const emailMatch = appointment.email
+        .toLowerCase()
+        .includes(searchFilters.email.toLowerCase());
+
       return nameMatch && phoneMatch && emailMatch;
     });
 
@@ -115,7 +121,7 @@ const UserTable = () => {
 
   const handleSearch = (searchValue) => {
     setAppointmentSearchTerm(searchValue);
-    const filtered = appointments.filter(appointment => {
+    const filtered = appointments.filter((appointment) => {
       const searchLower = searchValue.toLowerCase();
       return (
         appointment.name?.toLowerCase().includes(searchLower) ||
@@ -137,17 +143,17 @@ const UserTable = () => {
         }));
         // Sort appointments based on selected criteria
         const sortedAppointments = fetchedAppointments.sort((a, b) => {
-          if (sortBy === 'date') {
+          if (sortBy === "date") {
             const dateA = new Date(a.registrationDate);
             const dateB = new Date(b.registrationDate);
-            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
           } else {
             // Sort by name (default)
             const nameA = a.name.toLowerCase();
             const nameB = b.name.toLowerCase();
-            return sortOrder === 'desc' 
-              ? nameB.localeCompare(nameA, 'ar')
-              : nameA.localeCompare(nameB, 'ar');
+            return sortOrder === "desc"
+              ? nameB.localeCompare(nameA, "ar")
+              : nameA.localeCompare(nameB, "ar");
           }
         });
         setAppointments(sortedAppointments);
@@ -196,7 +202,11 @@ const UserTable = () => {
 
     try {
       // التحقق من البيانات المطلوبة
-      if (!editingAppointment.name || !editingAppointment.phone || !editingAppointment.email) {
+      if (
+        !editingAppointment.name ||
+        !editingAppointment.phone ||
+        !editingAppointment.email
+      ) {
         toast.error("يرجى ملء جميع الحقول المطلوبة");
         return;
       }
@@ -206,37 +216,38 @@ const UserTable = () => {
         name: editingAppointment.name,
         phone: editingAppointment.phone,
         email: editingAppointment.email,
-        clinicOrCenter: editingAppointment.clinicOrCenter || '',
-        province: editingAppointment.province || '',
-        service: editingAppointment.service || '',
-        appointment: editingAppointment.appointment || '',
-        message: editingAppointment.message || '',
-        type: editingAppointment.type || '',
+        clinicOrCenter: editingAppointment.clinicOrCenter || "",
+        province: editingAppointment.province || "",
+        service: editingAppointment.service || "",
+        appointment: editingAppointment.appointment || "",
+        message: editingAppointment.message || "",
+        type: editingAppointment.type || "",
         dataSent: editingAppointment.dataSent || false,
-        comments: editingAppointment.comments || '',
-        registrationDate: editingAppointment.registrationDate || new Date().toISOString()
+        comments: editingAppointment.comments || "",
+        registrationDate:
+          editingAppointment.registrationDate || new Date().toISOString(),
       };
 
       const appointmentRef = doc(db, "Appointments", editingAppointment.id);
       await updateDoc(appointmentRef, appointmentData);
 
       // تحديث البيانات في الواجهة
-      setAppointments(prevAppointments => 
-        prevAppointments.map(appointment =>
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appointment) =>
           appointment.id === editingAppointment.id
             ? { ...appointment, ...appointmentData }
             : appointment
         )
       );
 
-      setFilteredAppointments(prevFiltered => 
-        prevFiltered.map(appointment =>
+      setFilteredAppointments((prevFiltered) =>
+        prevFiltered.map((appointment) =>
           appointment.id === editingAppointment.id
             ? { ...appointment, ...appointmentData }
             : appointment
         )
       );
-      
+
       handleCloseEditModal();
       toast.success("تم تحديث الموعد بنجاح");
     } catch (error) {
@@ -247,9 +258,9 @@ const UserTable = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEditingAppointment(prev => ({
+    setEditingAppointment((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -300,48 +311,6 @@ const UserTable = () => {
     }
   };
 
-  const handleSendWhatsApp = (appointment) => {
-    const phoneNumber = appointment.phone.startsWith("+")
-      ? appointment.phone
-      : `+20${appointment.phone}`;
-    const message =
-      `مرحبًا ${appointment.name}،\n\n` +
-      `تفاصيل الموعد الخاص بك:\n` +
-      `- الاسم: ${appointment.name}\n` +
-      `- رقم الهاتف: ${appointment.phone}\n` +
-      `- البريد الإلكتروني: ${appointment.email}\n` +
-      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
-      `- المحافظة: ${appointment.province}\n` +
-      `- العنوان: ${appointment.address || 'غير محدد'}\n` +
-      `- التخصص: ${appointment.service}\n` +
-      `- الموعد: ${new Date(appointment.appointment).toLocaleString("ar-EG", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).replace("،", " - ")}\n` +
-      `- الرسالة: ${appointment.message || 'لا توجد رسالة'}\n` +
-      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString('ar-EG', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        })}\n` +
-      `- التعليقات: ${appointment.comments || 'لا توجد تعليقات'}\n\n` +
-      `شكرًا لتواصلك معنا!\n` +
-      `Egypt Health Care`;
-
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(whatsappURL, "_blank");
-  };
-
   const handleSendEmail = (appointment) => {
     const email = appointment.email;
     const subject = "تفاصيل الموعد الخاص بك - Egypt Health Care";
@@ -353,9 +322,10 @@ const UserTable = () => {
       `- البريد الإلكتروني: ${appointment.email}\n` +
       `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
       `- المحافظة: ${appointment.province}\n` +
-      `- العنوان: ${appointment.address || 'غير محدد'}\n` +
+      `- العنوان: ${appointment.address || "غير محدد"}\n` +
       `- التخصص: ${appointment.service}\n` +
-      `- الموعد: ${new Date(appointment.appointment).toLocaleString("ar-EG", {
+      `- الموعد: ${new Date(appointment.appointment)
+        .toLocaleString("ar-EG", {
           weekday: "long",
           year: "numeric",
           month: "long",
@@ -363,17 +333,21 @@ const UserTable = () => {
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
-        }).replace("،", " - ")}\n` +
-      `- الرسالة: ${appointment.message || 'لا توجد رسالة'}\n` +
-      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString('ar-EG', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        })}\n` +
-      `- التعليقات: ${appointment.comments || 'لا توجد تعليقات'}\n\n` +
+        })
+        .replace("،", " - ")}\n` +
+      `- الرسالة: ${appointment.message || "لا توجد رسالة"}\n` +
+      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString(
+        "ar-EG",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }
+      )}\n` +
+      `- التعليقات: ${appointment.comments || "لا توجد تعليقات"}\n\n` +
       `شكرًا لتواصلك معنا!\n` +
       `Egypt Health Care`;
 
@@ -383,14 +357,61 @@ const UserTable = () => {
     window.open(mailtoURL, "_blank");
   };
 
-  const handleWhatsAppClick = (appointment) => {
-    const phoneNumber = appointment.phone.startsWith("+")
-      ? appointment.phone
-      : `+20${appointment.phone}`;
-    const message = `مرحبًا ${appointment.name}،\n\nتفاصيل الموعد الخاص بك:\n...`;
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
+  const handleSendWhatsApp = (appointment) => {
+    // تنظيف رقم الهاتف من أي مسافات أو رموز غير ضرورية
+    let phoneNumber = appointment.phone.replace(/\s+/g, '').replace(/[^\d+]/g, '');
+    
+    // إضافة +20 إذا لم يكن الرقم يبدأ بـ +20 أو 20
+    if (!phoneNumber.startsWith('+20') && !phoneNumber.startsWith('20')) {
+      phoneNumber = `+20${phoneNumber}`;
+    }
+    
+    // إضافة + إذا لم يكن موجوداً
+    if (!phoneNumber.startsWith('+')) {
+      phoneNumber = `+${phoneNumber}`;
+    }
+
+    const message =
+      `مرحبًا ${appointment.name}،\n\n` +
+      `تفاصيل الموعد الخاص بك:\n` +
+      `- الاسم: ${appointment.name}\n` +
+      `- رقم الهاتف: ${appointment.phone}\n` +
+      `- البريد الإلكتروني: ${appointment.email}\n` +
+      `- المكان: ${appointment.type} ${appointment.clinicOrCenter}\n` +
+      `- المحافظة: ${appointment.province}\n` +
+      `- العنوان: ${appointment.address || "غير محدد"}\n` +
+      `- التخصص: ${appointment.service}\n` +
+      `- الموعد: ${new Date(appointment.appointment)
+        .toLocaleString("ar-EG", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .replace("،", " - ")}\n` +
+      `- الرسالة: ${appointment.message || "لا توجد رسالة"}\n` +
+      `- تاريخ التسجيل: ${new Date(appointment.registrationDate).toLocaleString(
+        "ar-EG",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }
+      )}\n` +
+      `- التعليقات: ${appointment.comments || "لا توجد تعليقات"}\n\n` +
+      `شكرًا لتواصلك معنا!\n` +
+      `Egypt Health Care`;
+
+    // إنشاء رابط WhatsApp مع الرقم والرسالة
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    // فتح WhatsApp في نافذة جديدة
     window.open(whatsappURL, "_blank");
   };
 
@@ -431,9 +452,12 @@ const UserTable = () => {
         ...newAppointment,
         registrationDate: new Date().toISOString(),
         dataSent: false,
-        comments: ""
+        comments: "",
       };
-      const docRef = await addDoc(collection(db, "Appointments"), appointmentData);
+      const docRef = await addDoc(
+        collection(db, "Appointments"),
+        appointmentData
+      );
       const appointmentWithId = { id: docRef.id, ...appointmentData };
       setAppointments([...appointments, appointmentWithId]);
       setFilteredAppointments([...filteredAppointments, appointmentWithId]);
@@ -446,17 +470,23 @@ const UserTable = () => {
   const handleToggleAppointmentDataSent = async (appointmentId) => {
     try {
       const appointmentRef = doc(db, "Appointments", appointmentId);
-      const updatedAppointment = appointments.find((app) => app.id === appointmentId);
+      const updatedAppointment = appointments.find(
+        (app) => app.id === appointmentId
+      );
       const newDataSentStatus = !updatedAppointment.dataSent;
       await updateDoc(appointmentRef, { dataSent: newDataSentStatus });
       setAppointments(
         appointments.map((app) =>
-          app.id === appointmentId ? { ...app, dataSent: newDataSentStatus } : app
+          app.id === appointmentId
+            ? { ...app, dataSent: newDataSentStatus }
+            : app
         )
       );
       setFilteredAppointments(
         filteredAppointments.map((app) =>
-          app.id === appointmentId ? { ...app, dataSent: newDataSentStatus } : app
+          app.id === appointmentId
+            ? { ...app, dataSent: newDataSentStatus }
+            : app
         )
       );
       toast.success(
@@ -506,12 +536,16 @@ const UserTable = () => {
         await updateDoc(appointmentRef, { comments: commentText });
         setAppointments(
           appointments.map((app) =>
-            app.id === selectedAppointment.id ? { ...app, comments: commentText } : app
+            app.id === selectedAppointment.id
+              ? { ...app, comments: commentText }
+              : app
           )
         );
         setFilteredAppointments(
           filteredAppointments.map((app) =>
-            app.id === selectedAppointment.id ? { ...app, comments: commentText } : app
+            app.id === selectedAppointment.id
+              ? { ...app, comments: commentText }
+              : app
           )
         );
         toast.success("تم حفظ التعليق بنجاح");
@@ -523,20 +557,20 @@ const UserTable = () => {
   };
 
   const handleSortByRegistrationDate = () => {
-    if (sortBy === 'date') {
-      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    if (sortBy === "date") {
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
-      setSortBy('date');
-      setSortOrder('desc');
+      setSortBy("date");
+      setSortOrder("desc");
     }
   };
 
   const handleSortByName = () => {
-    if (sortBy === 'name') {
-      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    if (sortBy === "name") {
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
-      setSortBy('name');
-      setSortOrder('asc');
+      setSortBy("name");
+      setSortOrder("asc");
     }
   };
 
@@ -554,10 +588,14 @@ const UserTable = () => {
     const fetchClinicsAndCenters = async () => {
       try {
         const clinicsSnapshot = await getDocs(collection(db, "Clinics"));
-        setClinics(clinicsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setClinics(
+          clinicsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
 
         const centersSnapshot = await getDocs(collection(db, "Centers"));
-        setCenters(centersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setCenters(
+          centersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
       } catch (error) {
         console.error("Error fetching clinics and centers:", error);
       }
@@ -570,10 +608,14 @@ const UserTable = () => {
     const fetchServicesAndAdvice = async () => {
       try {
         const servicesSnapshot = await getDocs(collection(db, "services"));
-        setServices(servicesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setServices(
+          servicesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
 
         const adviceSnapshot = await getDocs(collection(db, "tips"));
-        setAdvice(adviceSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setAdvice(
+          adviceSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
       } catch (error) {
         console.error("Error fetching services and advice:", error);
       }
@@ -645,10 +687,7 @@ const UserTable = () => {
               />
             </div>
 
-            <ExportButton
-              data={filteredUsers}
-              filename="users"
-            />
+            <ExportButton data={filteredUsers} filename="users" />
 
             {loadingUsers ? (
               <p>Loading users...</p>
@@ -721,8 +760,6 @@ const UserTable = () => {
               </div>
             </div>
 
-           
-
             {loadingAppointments ? (
               <p>Loading appointments...</p>
             ) : (
@@ -732,12 +769,13 @@ const UserTable = () => {
                     <tr>
                       <th className="py-3 px-4">#</th>
                       <th className="py-3 px-4">
-                        <button 
+                        <button
                           onClick={handleSortByName}
                           className="flex items-center gap-1"
                         >
                           الاسم
-                          {sortBy === 'name' && (sortOrder === 'desc' ? '↑' : '↓')}
+                          {sortBy === "name" &&
+                            (sortOrder === "desc" ? "↑" : "↓")}
                         </button>
                       </th>
                       <th className="py-3 px-4">رقم الهاتف</th>
@@ -749,12 +787,13 @@ const UserTable = () => {
                       <th className="py-3 px-4">الرسالة</th>
                       <th className="py-3 px-4">حالة الإرسال</th>
                       <th className="py-3 px-4">
-                        <button 
+                        <button
                           onClick={handleSortByRegistrationDate}
                           className="flex items-center gap-1"
                         >
                           تاريخ التسجيل
-                          {sortBy === 'date' && (sortOrder === 'desc' ? '↑' : '↓')}
+                          {sortBy === "date" &&
+                            (sortOrder === "desc" ? "↑" : "↓")}
                         </button>
                       </th>
                       <th className="py-3 px-4">التعليقات</th>
@@ -766,14 +805,20 @@ const UserTable = () => {
                     {filteredAppointments.map((appointment, index) => (
                       <tr
                         key={appointment.id}
-                        ref={editingAppointment?.id === appointment.id ? editRef : null}
+                        ref={
+                          editingAppointment?.id === appointment.id
+                            ? editRef
+                            : null
+                        }
                         className="border-b hover:bg-gray-100"
                       >
                         <td className="py-3 px-4 text-black">{index + 1}</td>
-                        <td className="py-3 px-4 text-black">{appointment.name}</td>
+                        <td className="py-3 px-4 text-black">
+                          {appointment.name}
+                        </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleWhatsAppClick(appointment)}
+                            onClick={() => handleSendWhatsApp(appointment)}
                             className="text-blue-500 hover:underline"
                           >
                             {appointment.phone}
@@ -790,8 +835,12 @@ const UserTable = () => {
                         <td className="py-3 px-4">
                           {appointment.type} {appointment.clinicOrCenter}
                         </td>
-                        <td className="py-3 px-4 text-black">{appointment.province}</td>
-                        <td className="py-3 px-4 text-black">{appointment.service}</td>
+                        <td className="py-3 px-4 text-black">
+                          {appointment.province}
+                        </td>
+                        <td className="py-3 px-4 text-black">
+                          {appointment.service}
+                        </td>
                         <td className="py-3 px-4 text-black">
                           {new Date(appointment.appointment)
                             .toLocaleString("ar-EG", {
@@ -805,34 +854,45 @@ const UserTable = () => {
                             })
                             .replace("،", " - ")}
                         </td>
-                        <td className="py-3 px-4 text-black">{appointment.message}</td>
+                        <td className="py-3 px-4 text-black">
+                          {appointment.message}
+                        </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleToggleAppointmentDataSent(appointment.id)}
+                            onClick={() =>
+                              handleToggleAppointmentDataSent(appointment.id)
+                            }
                             className={`py-1 px-3 rounded w-full ${
-                              appointment.dataSent ? "bg-green-500" : "bg-yellow-500"
+                              appointment.dataSent
+                                ? "bg-green-500"
+                                : "bg-yellow-500"
                             } text-white`}
                           >
-                            {appointment.dataSent ? "تم الإرسال" : "لم يتم الإرسال"}
+                            {appointment.dataSent
+                              ? "تم الإرسال"
+                              : "لم يتم الإرسال"}
                           </button>
                         </td>
                         <td className="py-3 px-4">
-                          {new Date(appointment.registrationDate)
-                            .toLocaleString('ar-EG', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
+                          {new Date(
+                            appointment.registrationDate
+                          ).toLocaleString("ar-EG", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
                         </td>
                         <td className="py-3 px-4">
                           <button
                             onClick={() => handleOpenCommentModal(appointment)}
                             className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded w-full"
                           >
-                            {appointment.comments ? "تعديل التعليق" : "إضافة تعليق"}
+                            {appointment.comments
+                              ? "تعديل التعليق"
+                              : "إضافة تعليق"}
                           </button>
                         </td>
                         <td className="py-3 px-4 text-black">
@@ -845,7 +905,9 @@ const UserTable = () => {
                         </td>
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleDeleteAppointment(appointment.id)}
+                            onClick={() =>
+                              handleDeleteAppointment(appointment.id)
+                            }
                             className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded w-full"
                           >
                             حذف
@@ -876,7 +938,9 @@ const UserTable = () => {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="block text-gray-700 mb-2">رقم الهاتف</label>
+                      <label className="block text-gray-700 mb-2">
+                        رقم الهاتف
+                      </label>
                       <TextInput
                         placeholder="رقم الهاتف"
                         name="phone"
@@ -885,7 +949,9 @@ const UserTable = () => {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="block text-gray-700 mb-2">الايميل</label>
+                      <label className="block text-gray-700 mb-2">
+                        الايميل
+                      </label>
                       <TextInput
                         placeholder="الايميل"
                         name="email"
@@ -903,7 +969,9 @@ const UserTable = () => {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="block text-gray-700 mb-2">المحافظة</label>
+                      <label className="block text-gray-700 mb-2">
+                        المحافظة
+                      </label>
                       <TextInput
                         placeholder="المحافظة"
                         name="province"
@@ -930,7 +998,9 @@ const UserTable = () => {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="block text-gray-700 mb-2">الرسالة</label>
+                      <label className="block text-gray-700 mb-2">
+                        الرسالة
+                      </label>
                       <TextInput
                         placeholder="الرسالة"
                         name="message"
@@ -962,24 +1032,32 @@ const UserTable = () => {
         {activeTab === 2 && (
           <div className="space-y-8">
             <Statistics appointments={appointments} users={users} />
-            
+
             <div className="bg-white p-6 rounded-lg shadow-lg">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-blue-700 text-center">التحليل الإحصائي للمواعيد</h2>
-                <ExportButton 
+                <h2 className="text-2xl font-semibold text-blue-700 text-center">
+                  التحليل الإحصائي للمواعيد
+                </h2>
+                <ExportButton
                   data={filteredAppointments}
                   filename="statistics"
                   statistics={{
                     totalAppointments: appointments.length,
                     totalUsers: users.length,
-                    totalDoctors: [...new Set(appointments.map(app => app.doctor))].length,
+                    totalDoctors: [
+                      ...new Set(appointments.map((app) => app.doctor)),
+                    ].length,
                     totalSpecialties: services.length,
                     totalClinics: clinics.length,
                     totalCenters: centers.length,
-                    bookedAppointments: appointments.filter(app => app.dataSent).length,
-                    availableSlots: appointments.filter(app => !app.dataSent).length,
-                    dataSent: appointments.filter(app => app.dataSent).length,
-                    notDataSent: appointments.filter(app => !app.dataSent).length,
+                    bookedAppointments: appointments.filter(
+                      (app) => app.dataSent
+                    ).length,
+                    availableSlots: appointments.filter((app) => !app.dataSent)
+                      .length,
+                    dataSent: appointments.filter((app) => app.dataSent).length,
+                    notDataSent: appointments.filter((app) => !app.dataSent)
+                      .length,
                     appointmentsByProvince: appointments.reduce((acc, app) => {
                       acc[app.province] = (acc[app.province] || 0) + 1;
                       return acc;
@@ -998,14 +1076,16 @@ const UserTable = () => {
                       const location = `${app.type} ${app.clinicOrCenter}`;
                       acc[location] = (acc[location] || 0) + 1;
                       return acc;
-                    }, {})
+                    }, {}),
                   }}
                 />
               </div>
 
               {/* إحصائيات العيادات والمراكز */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4">إحصائيات العيادات والمراكز:</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  إحصائيات العيادات والمراكز:
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-100 p-4 rounded-lg">
                     <p className="text-lg font-semibold">عدد العيادات</p>
@@ -1019,7 +1099,9 @@ const UserTable = () => {
                   </div>
                   <div className="bg-purple-100 p-4 rounded-lg">
                     <p className="text-lg font-semibold">إجمالي المنشآت</p>
-                    <p className="text-2xl mt-2">{clinics.length + centers.length}</p>
+                    <p className="text-2xl mt-2">
+                      {clinics.length + centers.length}
+                    </p>
                     {/* <p className="text-sm mt-2 text-gray-600">المنشآت النشطة: {clinics.filter(c => c.isActive).length + centers.filter(c => c.isActive).length}</p> */}
                   </div>
                 </div>
@@ -1027,7 +1109,9 @@ const UserTable = () => {
 
               {/* إحصائيات التخصصات */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4">إحصائيات التخصصات:</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  إحصائيات التخصصات:
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-yellow-100 p-4 rounded-lg">
                     <p className="text-lg font-semibold">عدد التخصصات</p>
@@ -1037,14 +1121,16 @@ const UserTable = () => {
                   <div className="bg-red-100 p-4 rounded-lg">
                     <p className="text-lg font-semibold">عدد النصائح الطبية</p>
                     <p className="text-2xl mt-2">{advice.length}</p>
-                     {/* <p className="text-sm mt-2 text-gray-600">النصائح النشطة: {advice.filter(a => a.isActive).length}</p> */}
+                    {/* <p className="text-sm mt-2 text-gray-600">النصائح النشطة: {advice.filter(a => a.isActive).length}</p> */}
                   </div>
                 </div>
               </div>
-              
+
               {/* إجمالي المواعيد */}
               <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4">إجمالي المواعيد: {appointments.length}</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  إجمالي المواعيد: {appointments.length}
+                </h3>
               </div>
 
               {/* حالة الإرسال */}
@@ -1052,17 +1138,25 @@ const UserTable = () => {
                 <h3 className="text-xl font-semibold mb-4">حالة الإرسال:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-green-100 p-4 rounded-lg">
-                    <p className="text-lg">تم الإرسال: {appointments.filter(app => app.dataSent).length}</p>
+                    <p className="text-lg">
+                      تم الإرسال:{" "}
+                      {appointments.filter((app) => app.dataSent).length}
+                    </p>
                   </div>
                   <div className="bg-yellow-100 p-4 rounded-lg">
-                    <p className="text-lg">لم يتم الإرسال: {appointments.filter(app => !app.dataSent).length}</p>
+                    <p className="text-lg">
+                      لم يتم الإرسال:{" "}
+                      {appointments.filter((app) => !app.dataSent).length}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* المواعيد حسب المحافظة */}
               <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-4">المواعيد حسب المحافظة:</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  المواعيد حسب المحافظة:
+                </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border border-gray-300">
                     <thead className="bg-gray-200">
@@ -1074,19 +1168,28 @@ const UserTable = () => {
                     </thead>
                     <tbody>
                       {(() => {
-                        const provinceCount = appointments.reduce((acc, app) => {
-                          acc[app.province] = (acc[app.province] || 0) + 1;
-                          return acc;
-                        }, {});
+                        const provinceCount = appointments.reduce(
+                          (acc, app) => {
+                            acc[app.province] = (acc[app.province] || 0) + 1;
+                            return acc;
+                          },
+                          {}
+                        );
 
                         return Object.entries(provinceCount)
                           .sort((a, b) => b[1] - a[1])
                           .map(([province, count]) => (
-                            <tr key={province} className="border-b hover:bg-gray-50">
+                            <tr
+                              key={province}
+                              className="border-b hover:bg-gray-50"
+                            >
                               <td className="py-3 px-4">{province}</td>
                               <td className="py-3 px-4">{count}</td>
                               <td className="py-3 px-4">
-                                {((count / appointments.length) * 100).toFixed(1)}%
+                                {((count / appointments.length) * 100).toFixed(
+                                  1
+                                )}
+                                %
                               </td>
                             </tr>
                           ));
@@ -1098,7 +1201,9 @@ const UserTable = () => {
 
               {/* المواعيد حسب التخصص */}
               <div>
-                <h3 className="text-xl font-semibold mb-4">المواعيد حسب التخصص:</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  المواعيد حسب التخصص:
+                </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border border-gray-300">
                     <thead className="bg-gray-200">
@@ -1118,11 +1223,17 @@ const UserTable = () => {
                         return Object.entries(serviceCount)
                           .sort((a, b) => b[1] - a[1])
                           .map(([service, count]) => (
-                            <tr key={service} className="border-b hover:bg-gray-50">
+                            <tr
+                              key={service}
+                              className="border-b hover:bg-gray-50"
+                            >
                               <td className="py-3 px-4">{service}</td>
                               <td className="py-3 px-4">{count}</td>
                               <td className="py-3 px-4">
-                                {((count / appointments.length) * 100).toFixed(1)}%
+                                {((count / appointments.length) * 100).toFixed(
+                                  1
+                                )}
+                                %
                               </td>
                             </tr>
                           ));
@@ -1139,7 +1250,9 @@ const UserTable = () => {
         {showCommentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-full max-w-lg mx-4">
-              <h3 className="text-xl font-semibold text-blue-700 mb-4">إضافة تعليق</h3>
+              <h3 className="text-xl font-semibold text-blue-700 mb-4">
+                إضافة تعليق
+              </h3>
               <textarea
                 className="w-full p-3 border rounded-lg mb-4 min-h-[150px]"
                 value={commentText}
